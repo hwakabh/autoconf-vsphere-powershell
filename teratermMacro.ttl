@@ -1,0 +1,205 @@
+; Connect to the ESXi host
+Connect '{{ hostname }} /ssh /2 /nosecuritywarning /auth=challenge /user=root /passwd=password'
+wait '#'
+
+; Open the log in teraterm program directory
+loginfo logfilename
+if result == -1 then
+   logopen '%Y%m%d_%H%M%S_{{ hostname }}.log' 0 1 0 1 1
+else
+   logclose
+   logopen '%Y%m%d_%H%M%S_{{ hostname }}.log' 0 1 0 1 1
+endif
+
+
+; Get the host information
+sendln 'uname -n'
+wait '#'
+sendln 'esxcfg-info -y |grep "System UUID"'
+wait '#'
+sendln 'esxcfg-advcfg -j netNetqueueEnabled'
+wait '#'
+sendln 'esxcfg-advcfg -j netPktHeapMaxMBPerGB'
+wait '#'
+
+; Stop the Shell-Warning
+sendln 'esxcli system settings advanced set -o /UserVars/SuppressShellWarning -i 1'
+wait '#'
+; Enable Password Authentication
+sendln 'sed -i -e "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd_config'
+wait '#'
+
+
+
+
+; Add uplink to vSwitch0
+sendln 'esxcli network vswitch standard uplink add -v vSwitch0 -u vmnic5'
+wait '#'
+sendln 'esxcli network vswitch standard uplink add -v vSwitch0 -u vmnic6'
+wait '#'
+
+; Activate the Uplinks
+sendln 'esxcli network vswitch standard policy failover set -v vSwitch0 -a vmnic5,vmnic6'
+wait '#'
+
+; Change the vSwitch0 Failover policy
+sendln 'esxcli network vswitch standard policy failover set -v vSwitch0 -l explicit'
+wait '#'
+sendln 'esxcli network vswitch standard policy failover set -v vSwitch0 -b false'
+wait '#'
+
+; Change MTU value of vSwitch0
+sendln 'esxcli network vswitch standard set -v vSwitch0 -m 9000'
+wait '#'
+
+
+
+
+; Copy vSwitch parameters and append to portgroup
+sendln 'esxcli network vswitch standard portgroup policy failover set -u -p "Management Network"' 
+wait '#'
+sendln ''
+wait '#'
+sendln 'esxcli network vswitch standard portgroup policy security set -u -p "Management Network"' 
+wait '#'
+sendln ''
+wait '#'
+sendln 'esxcli network vswitch standard portgroup policy shaping  set -u -p "Management Network"' 
+wait '#'
+sendln ''
+wait '#'
+
+; Change portgroup name
+sendln 'vim-cmd hostsvc/net/portgroup_set --portgroup-name="Management" vSwitch0 "Management Network"'
+wait '#'
+
+
+
+
+; Configure portgroup policy
+sendln 'esxcli network vswitch standard portgroup policy shaping set -e true -p "Management" -b 5242880 -k 5242880 -t 41943040'
+wait '#'
+sendln 'esxcli network vswitch standard portgroup policy failover set -p "Management" -a vmnic5 -s vmnic6'
+wait '#'
+sendln 'esxcli network vswitch standard portgroup policy failover set -p "Management" -b true'
+wait '#'
+
+; Enable vMotion trafic
+sendln 'esxcli network ip interface tag add -i vmk0 -t VMotion'
+wait '#'
+
+
+
+
+; Add new Portgroup on vSwitch0
+sendln 'esxcli network vswitch standard portgroup add -v vSwitch0 -p Storage1'
+wait '#'
+
+; Set vLAN ID on new portgroup
+sendln 'esxcli network vswitch standard portgroup set -p Storage1 -v 3935'
+wait '#'
+
+; Activate uplinks to Portgroup
+sendln 'esxcli network vswitch standard portgroup policy failover set -p Storage1 -a vmnic6'
+wait '#'
+
+; Assign vmk interface to portgroup
+sendln 'esxcli network ip interface add -i vmk1 -p Storage1'
+wait '#'
+
+; Set IP address to vmk interface
+sendln 'esxcli network ip interface ipv4 set -i vmk1 -I {{ vmk1-ipaddr }} -N {{ vmk1-netmask }} -t static'
+wait '#'
+
+; Change MTU value of portgroup
+sendln 'esxcfg-vmknic --mtu 9000 "Storage1"'
+wait '#'
+
+
+
+
+; Add new Portgroup on vSwitch0
+sendln 'esxcli network vswitch standard portgroup add -v vSwitch0 -p Storage2'
+wait '#'
+
+; Set vLAN ID on new portgroup
+sendln 'esxcli network vswitch standard portgroup set -p Storage2 -v 3936'
+wait '#'
+
+; Activate uplinks to Portgroup
+sendln 'esxcli network vswitch standard portgroup policy failover set -p Storage2 -a vmnic5'
+wait '#'
+
+; Assign vmk interface to portgroup
+sendln 'esxcli network ip interface add -i vmk2 -p Storage2'
+wait '#'
+
+; Set IP address to vmk interface
+sendln 'esxcli network ip interface ipv4 set -i vmk2 -I {{ vmk2-ipaddr }} -N {{ vmk2-netmask }} -t static'
+wait '#'
+
+; Change MTU value of portgroup
+sendln 'esxcfg-vmknic --mtu 9000 "Storage2"'
+wait '#'
+
+
+
+
+
+; Create new vSwitch on ESXi host
+sendln 'esxcli network vswitch standard add -v vSwitch1'
+wait '#'
+sendln 'esxcli network vswitch standard policy shaping set -e true -v vSwitch1 -b 1048576 -k 1048576 -t 8388608'
+wait '#'
+
+; Add Uplinks to vSwitch1
+sendln 'esxcli network vswitch standard uplink add -v vSwitch1 -u vmnic7'
+wait '#'
+sendln 'esxcli network vswitch standard uplink add -v vSwitch1 -u vmnic4'
+wait '#'
+
+; Activate the Uplinks
+sendln 'esxcli network vswitch standard policy failover set -v vSwitch1 -a vmnic7,vmnic4'
+wait '#'
+
+; Change the vSwitch1 Failover policy
+sendln 'esxcli network vswitch standard policy failover set -v vSwitch1 -l explicit'
+wait '#'
+sendln 'esxcli network vswitch standard policy failover set -v vSwitch1 -b false'
+wait '#'
+
+; Change MTU value of vSwitch1
+sendln 'esxcli network vswitch standard set -v vSwitch1 -m 9000'
+wait '#'
+
+
+
+
+; Add new portgroup on vSwitch1
+sendln 'esxcli network vswitch standard portgroup add -v vSwitch1 -p HeartBeat'
+wait '#'
+
+; Set vLAN ID on new portgroup
+sendln 'esxcli network vswitch standard portgroup set -p HeartBeat -v 4000'
+wait '#'
+
+; Activate uplinks to Portgroup
+sendln 'esxcli network vswitch standard portgroup policy failover set -p HeartBeat -a vmnic7,vmnic4'
+wait '#'
+
+; Assign vmk interface to portgroup
+sendln 'esxcli network ip interface add -i vmk3 -p HeartBeat'
+wait '#'
+
+; Set IP address to vmk interface
+sendln 'esxcli network ip interface ipv4 set -i vmk3 -I {{ vmk3-ipaddr }} -N {{ vmk3-netmask }} -t static'
+wait '#'
+
+
+
+
+
+
+sendln 'vim-cmd hostsvc/net/refresh'
+sendln 'exit'
+wait '#'
