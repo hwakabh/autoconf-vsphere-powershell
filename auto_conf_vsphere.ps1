@@ -31,8 +31,7 @@ function Wait ()
 }
 
 # Functions awaiting user-input
-function  DoCommand-WithConfirm([string]$command, [string]$addMessage = "", [bool]$isDefaultYes=$false)
-{
+function  DoCommand-WithConfirm([string]$command, [string]$addMessage = "", [bool]$isDefaultYes=$false){
     # Selection to choose
     $CollectionType = [System.Management.Automation.Host.ChoiceDescription]
     $ChoiceType = "System.Collections.ObjectModel.Collection"
@@ -43,22 +42,19 @@ function  DoCommand-WithConfirm([string]$command, [string]$addMessage = "", [boo
 
     # Confirmation messages
     $message = "Are you sure to run command [" + $command + "] ??"
-    if( -not [string]::IsNullOrEmpty($addMessage))
-    {
+    if( -not [string]::IsNullOrEmpty($addMessage)){
         $message += [System.Environment]::NewLine + $addMessage
     }
 
     # Set default value
     $defaultType = 1;
-    if($isDefaultYes -eq $true)
-    {
+    if($isDefaultYes -eq $true){
         $defaultType = 0;
     }
 
     # If user enter 'yes', execute command.
     $answer = $host.ui.PromptForChoice("[Confirmation]",$message ,$descriptions,$defaultType)
-    if($answer -eq 0)
-    {
+    if($answer -eq 0){
         Invoke-Expression "$command"
     }
 }
@@ -93,18 +89,14 @@ LoadPowerCLI VMware.VimAutomation.Core
 $ScriptPath = Split-Path $MyInvocation.MyCommand.Path -Parent
 
 # Case if config file not specified, use default configuration file
-if(!"$FILE") 
-{
+if(!"$FILE"){
 	$FILE = ("$ScriptPath\$DEFAULT_CSV_CONFIG_FILE")
 }
 
 # Check if configuration file exist or not
-if(Test-Path "$FILE") 
-{
+if(Test-Path "$FILE") {
     Write-Host "Configuration file found. [$FILE]."
-}
-else
-{
+}else{
     Write-Host "Configuration file [$FILE] not found. Check the file path and re-run this script."
     Write-Host "Nothing to do, exit the program..."
     exit 1
@@ -135,27 +127,21 @@ $VIUser=$vms[0].vCenterUserName
 $VIPassword=$vms[0].vCenterUserPassword
 
 ### If credentials are in configuration file, use them to connect.
-if( ($VIServer) -And ($VIUser) -And ($VIPassword))
-{
+if( ($VIServer) -And ($VIUser) -And ($VIPassword)){
 	Write-Host "Connect to vCenter Server [$VIServer]`n`n..."
 	$vi = Connect-VIServer -Server $VIServer -user $VIUser -password $VIPassword
 
 	$i = 1
-	while (1) 
-	{
-	    If ($vi.IsConnected) 
-	    {
+	while (1) {
+	    if ($vi.IsConnected){
         	Write-Host "Connection complete vCenter Server [$VIServer] ...`n"
         	break
     	}
-	
-	    trap [System.Management.Automation.RuntimeException]
-	    {
+   	    trap [System.Management.Automation.RuntimeException]{
         	Write-Warning "Connection failed vCenter Server ..."
         	break
     	}
-    	If ($i -ge 3) 
-    	{
+    	if ($i -ge 3) {
 	        Throw "vCenter Server Authentication less than $i times."
         	break
     	}
@@ -163,38 +149,29 @@ if( ($VIServer) -And ($VIUser) -And ($VIPassword))
 	}
     
     
-}
-### If credentials are not in file, awaiting for user-input
-elseif($VIServer)
-{
+}elseif($VIServer){
+    ### If credentials are not in file, awaiting for user-input
 	Write-Host "Connect to vCenter Server [$VIServer] `n`nInput User and Password ..."
 	$i = 1
 	$vi = $null
-	while (1) 
-	{
+	while (1) {
 	    $cred = $host.ui.PromptForCredential("Connection established to vCenter Server", "Enter username/password of vCenter Server...", "", "")
 	    $vi = Connect-VIServer -Server $VIServer -Credential $cred 2>&1
-	    If ($vi.IsConnected) 
-	    {
+	    if ($vi.IsConnected) {
         	Write-Host "Connection complete vCenter Server [$VIServer] ...`n"
         	break
-    	}
-	
-	    trap [System.Management.Automation.RuntimeException]
-	    {
+    	}	
+	    trap [System.Management.Automation.RuntimeException]{
         	Write-Warning "Connection failed vCenter Server ..."
         	break
     	}
-    	If ($i -ge 3) 
-    	{
+    	if ($i -ge 3) {
 	        Throw "vCenter Server Authentication less than $i times."
         	break
     	}
     	$i++
 	}
-}
-else
-{
+}else{
 	Write-Host "Failed to connect vCenter Server, exiting..."
 	exit
 }
@@ -218,27 +195,19 @@ Write-Host "---------------Create DataCenter---------------"
 
 $result_1=Get-Datacenter "$DatacenterName"
 
-if(!"$DatacenterName") 
-{
+if(!"$DatacenterName"){
 	Write-Host "No DataCenter defined in configuration file, please enter the DataCenter name to create." -fore Red
     exit 1
-}
-elseif ( ("$DatacenterName") -And ( !"$result_1" ) ) 
-{
+}elseif ( ("$DatacenterName") -And ( !"$result_1" ) ){
 	Write-Host "No DataCenter found, Create new DataCenter[ $DatacenterName ]..."
 	$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to create Datacenter[ $DatacenterName ] ??",$choice,0)
-	if ("$answer".Equals("0"))
-	{
+	if ("$answer".Equals("0")){
 		$LOCATION = Get-Folder -NoRecursion
 		New-Datacenter -Location "$LOCATION" -Name "$DatacenterName"
-	}
-	else
-	{
+	}else{
 		Write-Host "`nSkipped to create DataCenter [ $DatacenterName ]" -fore Red
 	}	
-} 
-else 
-{
+}else{
 	Write-Host "DataCenter[ $DatacenterName ] already exists. Skipped to create it."
 }
 
@@ -250,33 +219,22 @@ Write-Host "- HA Settings would be done in last part of this step."
 # Load parameter of EVC mode
 $EVC_Mode=$vms[0].EVC_Mode
 
-foreach ($cl in $vms) 
-{
+foreach ($cl in $vms){
 	$ClusterName = $cl.ClusterName
 
-	if("$ClusterName") 
-	{
-		if($EVC_Mode)
-		{
+	if("$ClusterName"){
+		if($EVC_Mode){
 			$answer = $host.ui.PromptForChoice("[Confirmation]","`n`Are you sure to create Cluster[ $ClusterName ] under [ $DatacenterName ] with EVC mode:[ $EVC_Mode ] ??",$choice,0)
-			if ("$answer".Equals("0"))
-			{
+			if ("$answer".Equals("0")){
 				New-Cluster -Location $DatacenterName -Name $ClusterName -EVCMode $EVC_Mode
-			}
-			else
-			{
+			}else{
 				Write-Host "`nSkipped to create Cluster[ $ClusterName ]" -fore Red
 			}	
-		}
-		else
-		{
+		}else{
 			$answer = $host.ui.PromptForChoice("[Confirmation]","`n`Are you sure to create Cluster[ $ClusterName ] under [ $DatacenterName ] ??",$choice,0)
-			if ("$answer".Equals("0"))
-			{
+			if ("$answer".Equals("0")){
 				New-Cluster -Location $DatacenterName -Name $ClusterName
-			}
-			else
-			{
+			}else{
 				Write-Host "`nSkipped to create Cluster[ $ClusterName ]" -fore Red
 			}	
 		}
@@ -286,67 +244,49 @@ foreach ($cl in $vms)
 
 Write-Host "---------------Register ESXi Hosts to Cluster---------------"
 ## Join hosts to Cluster1
-if ("$ClusterName_1")
-{
+if ("$ClusterName_1"){
 	$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to join each Host to Cluster[ $ClusterName_1 ] ??",$choice,0)
-	if ("$answer".Equals("0"))
-	{	
-		foreach ($vm in $vms) 
-		{
+	if ("$answer".Equals("0")){	
+		foreach ($vm in $vms){
 			$vSphereHost = $vm.vSphereHost_Cluster1
-			if("$vSphereHost") 
-			{
+			if("$vSphereHost") {
     			Add-VMHost -Name "$vSphereHost" -Location "$ClusterName_1" -User "$vSphereHostUserName" -Password "$vSphereHostPassword" -RunAsync -Force
     			timeout 2
 			}
 		}
-	}
-	else
-	{
+	}else{
 		Write-Host "`nSkipped to register hosts to Cluster[ $ClusterName_1 ]" -fore Red
 	}	
 }
 
 ## Join hosts to Cluster2
-if ("$ClusterName_2")
-{
+if ("$ClusterName_2"){
 	$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to join each Host to Cluster[ $ClusterName_2 ] ??",$choice,0)
-	if ("$answer".Equals("0"))
-	{	
-		foreach ($vm in $vms) 
-		{
+	if ("$answer".Equals("0")){	
+		foreach ($vm in $vms){
 			$vSphereHost = $vm.vSphereHost_Cluster2
-			if("$vSphereHost") 
-			{
+			if("$vSphereHost"){
     			Add-VMHost -Name "$vSphereHost" -Location "$ClusterName_2" -User "$vSphereHostUserName" -Password "$vSphereHostPassword" -RunAsync -Force
     			timeout 2
 			}
 		}
-	}
-	else
-	{
+	}else{
 		Write-Host "`nSkipped to register hosts to Cluster[ $ClusterName_2 ]" -fore Red
 	}	
 }
 
 ## Join hosts to Cluster3
-if ("$ClusterName_3")
-{
+if ("$ClusterName_3"){
 	$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to join each Host to Cluster[ $ClusterName_3 ] ??",$choice,0)
-	if ("$answer".Equals("0"))
-	{	
-		foreach ($vm in $vms) 
-		{
+	if ("$answer".Equals("0")){	
+		foreach ($vm in $vms){
 			$vSphereHost = $vm.vSphereHost_Cluster3
-			if("$vSphereHost") 
-			{
+			if("$vSphereHost"){
     			Add-VMHost -Name "$vSphereHost" -Location "$ClusterName_3" -User "$vSphereHostUserName" -Password "$vSphereHostPassword" -RunAsync -Force
     			timeout 2
 			}
 		}
-	}
-	else
-	{
+	}else{
 		Write-Host "`nSkipped to register hosts to Cluster[ $ClusterName_3 ]" -fore Red
 	}	
 }
@@ -357,13 +297,10 @@ Write-Host "Please wait 60 seconds to finish joining hosts to cluster...." -fore
 timeout 60
 
 $answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to set host Maintenace mode ??",$choice,0)
-if ("$answer".Equals("0"))
-{	
-	foreach ($cl in $vms)
-	{
+if ("$answer".Equals("0")){	
+	foreach ($cl in $vms){
 		$ClusterName=$cl.ClusterName
-		if ($ClusterName)
-		{
+		if ($ClusterName){
 			# Except hosts on which are running VMs
 			$EXCLUDE_ESXHOST = Get-VM -Location $ClusterName | Where-Object {$_.PowerState -eq 'PoweredOn'} | ForEach-Object {$_.Host}
 			$EXCLUDE_ESXHOST = $EXCLUDE_ESXHOST -join ","
@@ -377,17 +314,13 @@ Write-Host "---------------NTP Server Settings---------------"
 timeout 60
 
 ## NTP settiing for Cluster1
-if ("$ClusterName_1")
-{
+if ("$ClusterName_1"){
 	$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to add NTP Server to Cluster[ $ClusterName_1 ],`nwith auto-starting settings ??",$choice,0)
-	if ("$answer".Equals("0"))
-	{
+	if ("$answer".Equals("0")){
 		# Load NTP Server address from configuration file
-		foreach ($ntp in $vms)
-		{
+		foreach ($ntp in $vms){
 			$NTP_Server=$ntp.NTP_Server_Cluster1
-			if("$NTP_Server") 
-			{
+			if("$NTP_Server"){
 				Get-VMHost -Location "$ClusterName_1" | Add-VmHostNtpServer -NtpServer "$NTP_Server"
 			}
 		}
@@ -395,25 +328,19 @@ if ("$ClusterName_1")
 	Get-VMHost -Location "$ClusterName_1" | Get-VMHostService | where {$_.key -eq "ntpd"} | Set-VMHostService -Policy On
 	Get-VMHost -Location "$ClusterName_1" | Get-VMHostService | where {$_.key -eq "ntpd"} | Start-VMHostService
 
-	}
-	else
-	{
+	}else{
 		Write-Host "`nSkipped to configure NTP address to Cluster[ $ClusterName_1 ]." -fore Red
 	}
 }
 
 ## NTP settiing for Cluster2
-if ("$ClusterName_2")
-{
+if ("$ClusterName_2"){
 	$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to add NTP Server to Cluster[ $ClusterName_2 ],`nwith auto-starting settings ??",$choice,0)
-	if ("$answer".Equals("0"))
-	{
+	if ("$answer".Equals("0")){
 		# Load NTP Server address from configuration file
-		foreach ($ntp in $vms)
-		{
+		foreach ($ntp in $vms){
 			$NTP_Server=$ntp.NTP_Server_Cluster2
-			if("$NTP_Server") 
-			{
+			if("$NTP_Server"){
 				Get-VMHost -Location "$ClusterName_2" | Add-VmHostNtpServer -NtpServer "$NTP_Server"
 			}
 		}
@@ -421,26 +348,20 @@ if ("$ClusterName_2")
 	Get-VMHost -Location "$ClusterName_2" | Get-VMHostService | where {$_.key -eq "ntpd"} | Set-VMHostService -Policy On
 	Get-VMHost -Location "$ClusterName_2" | Get-VMHostService | where {$_.key -eq "ntpd"} | Start-VMHostService
 
-	}
-	else
-	{
+	}else{
 		Write-Host "`nSkipped to configure NTP address to Cluster[ $ClusterName_2 ]." -fore Red
 	}
 }
 
 
 ## NTP settiing for Cluster3
-if ("$ClusterName_3")
-{
+if ("$ClusterName_3"){
 	$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to add NTP Server to Cluster[ $ClusterName_3 ],`nwith auto-starting settings ??",$choice,0)
-	if ("$answer".Equals("0"))
-	{
+	if ("$answer".Equals("0")){
 		# Load NTP Server address from configuration file
-		foreach ($ntp in $vms)
-		{
+		foreach ($ntp in $vms){
 			$NTP_Server=$ntp.NTP_Server_Cluster3
-			if("$NTP_Server") 
-			{
+			if("$NTP_Server"){
 				Get-VMHost -Location "$ClusterName_3" | Add-VmHostNtpServer -NtpServer "$NTP_Server"
 			}
 		}
@@ -448,9 +369,7 @@ if ("$ClusterName_3")
 	Get-VMHost -Location "$ClusterName_3" | Get-VMHostService | where {$_.key -eq "ntpd"} | Set-VMHostService -Policy On
 	Get-VMHost -Location "$ClusterName_3" | Get-VMHostService | where {$_.key -eq "ntpd"} | Start-VMHostService
 
-	}
-	else
-	{
+	}else{
 		Write-Host "`nSkipped to configure NTP address to Cluster[ $ClusterName_3 ]." -fore Red
 	}
 }
@@ -458,16 +377,13 @@ if ("$ClusterName_3")
 
 Write-Host "---------------Syslog Server Settings---------------"
 ## Syslog Server settings for Cluster1
-if ("$ClusterName_1")
-{
+if ("$ClusterName_1"){
 	# Load syslog Server address from configuration file
 	$Syslog_Server=$vms[0].Syslog_Server_Cluster1
 
-	if("$Syslog_Server") 
-	{
+	if("$Syslog_Server"){
 		$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to configure syslog server:[ $Syslog_Server ] to Cluster[ $ClusterName_1 ],`n with Paremeters:: Syslog.global.defaultRotate==90`nSyslog.global.defaultSize==10240`nand Firewall settings of [ syslog ] and [ VM serial port connected over network ] ??",$choice,0)
-		if ("$answer".Equals("0"))
-		{
+		if ("$answer".Equals("0")){
 			Get-VMHost -Location "$ClusterName_1" | Set-VMHostSysLogServer -SysLogServer "$Syslog_Server"
 			# Set parameters
 			Get-VMHost -Location "$ClusterName_1" | Get-AdvancedSetting -Name "Syslog.global.defaultRotate" | Set-AdvancedSetting -Value "90" -Confirm:$false
@@ -475,25 +391,20 @@ if ("$ClusterName_1")
 			# Firewall configurations
 			Get-VMHost -Location $ClusterName_1 | Get-VMHostFirewallException | where {$_.Name.StartsWith('syslog')} | Set-VMHostFirewallException -Enabled $true 
 			Get-VMHost -Location $ClusterName_1 | Get-VMHostFirewallException | where {$_.Name.StartsWith('VM serial port connected over network')} | Set-VMHostFirewallException -Enabled $true
-		}
-		else
-		{
+		}else{
 			Write-Host "`nSkipped to connfiguration of Cluster[ $ClusterName_1 ]." -fore Red
 		}
 	}
 }
 
 ## Syslog Server settings for Cluster2
-if ("$ClusterName_2")
-{
+if ("$ClusterName_2"){
 	# Load syslog Server address from configuration file
 	$Syslog_Server=$vms[0].Syslog_Server_Cluster2
 
-	if("$Syslog_Server") 
-	{
+	if("$Syslog_Server"){
 		$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to configure syslog server:[ $Syslog_Server ] to Cluster[ $ClusterName_2 ],`n with Paremeters:: Syslog.global.defaultRotate==90`nSyslog.global.defaultSize==10240`nand Firewall settings of [ syslog ] and [ VM serial port connected over network ] ??",$choice,0)
-		if ("$answer".Equals("0"))
-		{
+		if ("$answer".Equals("0")){
 			Get-VMHost -Location "$ClusterName_2" | Set-VMHostSysLogServer -SysLogServer "$Syslog_Server"
 			# Set parameters
 			Get-VMHost -Location "$ClusterName_2" | Get-AdvancedSetting -Name "Syslog.global.defaultRotate" | Set-AdvancedSetting -Value "90" -Confirm:$false
@@ -501,25 +412,20 @@ if ("$ClusterName_2")
 			# Firewall configurations
 			Get-VMHost -Location $ClusterName_2 | Get-VMHostFirewallException | where {$_.Name.StartsWith('syslog')} | Set-VMHostFirewallException -Enabled $true 
 			Get-VMHost -Location $ClusterName_2 | Get-VMHostFirewallException | where {$_.Name.StartsWith('VM serial port connected over network')} | Set-VMHostFirewallException -Enabled $true
-		}
-		else
-		{
+		}else{
 			Write-Host "`nSkipped to connfiguration of Cluster[ $ClusterName_2 ]." -fore Red
 		}
 	}
 }
 
 ## Syslog Server settings for Cluster3
-if ("$ClusterName_3")
-{
+if ("$ClusterName_3"){
 	# Load syslog Server address from configuration file
 	$Syslog_Server=$vms[0].Syslog_Server_Cluster3
 
-	if("$Syslog_Server") 
-	{
+	if("$Syslog_Server"){
 		$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to configure syslog server:[ $Syslog_Server ] to Cluster[ $ClusterName_3 ],`n with Paremeters:: Syslog.global.defaultRotate==90`nSyslog.global.defaultSize==10240`nand Firewall settings of [ syslog ] and [ VM serial port connected over network ] ??",$choice,0)
-		if ("$answer".Equals("0"))
-		{
+		if ("$answer".Equals("0")){
 			Get-VMHost -Location "$ClusterName_3" | Set-VMHostSysLogServer -SysLogServer "$Syslog_Server"
 			# Set parameters
 			Get-VMHost -Location "$ClusterName_3" | Get-AdvancedSetting -Name "Syslog.global.defaultRotate" | Set-AdvancedSetting -Value "90" -Confirm:$false
@@ -527,9 +433,7 @@ if ("$ClusterName_3")
 			# Firewall configurations
 			Get-VMHost -Location $ClusterName_3 | Get-VMHostFirewallException | where {$_.Name.StartsWith('syslog')} | Set-VMHostFirewallException -Enabled $true 
 			Get-VMHost -Location $ClusterName_3 | Get-VMHostFirewallException | where {$_.Name.StartsWith('VM serial port connected over network')} | Set-VMHostFirewallException -Enabled $true
-		}
-		else
-		{
+		}else{
 			Write-Host "`nSkipped to connfiguration of Cluster[ $ClusterName_3 ]." -fore Red
 		}
 	}
@@ -540,19 +444,15 @@ if ("$ClusterName_3")
 
 # Run TeraTerm Macro with esxcli
 ## For Cluster1
-if ("$ClusterName_1")
-{
+if ("$ClusterName_1"){
 	$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to run TeraTeram Macro to Cluster[ $ClusterName_1 ] ??",$choice,0)
-	if ("$answer".Equals("0"))
-	{	
+	if ("$answer".Equals("0")){	
 		# TeraTerm execution program
 		[System.String]$teraMacroExe = $vms[0].Teraterm_Path
-		foreach ($vm in $vms) 
-		{
+		foreach ($vm in $vms){
 			# Get ESXi host lists of Cluster
 			$vSphereHost = $vm.vSphereHost_Cluster1
-			if("$vSphereHost") 
-			{
+			if("$vSphereHost"){
 				[System.String]$teraTTLFile = "$ScriptPath\$vSphereHost.ttl"
 				Start-Process -FilePath $teraMacroExe -ArgumentList $teraTTLFile
 				Start-Sleep -s 3
@@ -562,19 +462,15 @@ if ("$ClusterName_1")
 }
 
 ## For Cluster2
-if ("$ClusterName_2")
-{
+if ("$ClusterName_2"){
 	$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to run TeraTeram Macro to Cluster[ $ClusterName_2 ] ??",$choice,0)
-	if ("$answer".Equals("0"))
-	{	
+	if ("$answer".Equals("0")){	
 		# TeraTerm execution program
 		[System.String]$teraMacroExe = $vms[0].Teraterm_Path
-		foreach ($vm in $vms) 
-		{
+		foreach ($vm in $vms){
 			# Get ESXi host lists of Cluster
 			$vSphereHost = $vm.vSphereHost_Cluster2
-			if("$vSphereHost") 
-			{
+			if("$vSphereHost"){
 				[System.String]$teraTTLFile = "$ScriptPath\$vSphereHost.ttl"
 				Start-Process -FilePath $teraMacroExe -ArgumentList $teraTTLFile
 				Start-Sleep -s 3
@@ -584,19 +480,15 @@ if ("$ClusterName_2")
 }
 
 ## For Cluster3
-if ("$ClusterName_3")
-{
+if ("$ClusterName_3"){
 	$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to run TeraTeram Macro to Cluster[ $ClusterName_3 ] ??",$choice,0)
-	if ("$answer".Equals("0"))
-	{	
+	if ("$answer".Equals("0")){	
 		# TeraTerm execution program
 		[System.String]$teraMacroExe = $vms[0].Teraterm_Path
-		foreach ($vm in $vms) 
-		{
+		foreach ($vm in $vms){
 			# Get ESXi host lists of Cluster
 			$vSphereHost = $vm.vSphereHost_Cluster3
-			if("$vSphereHost") 
-			{
+			if("$vSphereHost"){
 				[System.String]$teraTTLFile = "$ScriptPath\$vSphereHost.ttl"
 				Start-Process -FilePath $teraMacroExe -ArgumentList $teraTTLFile
 				Start-Sleep -s 3
@@ -610,48 +502,39 @@ if ("$ClusterName_3")
 ## Get name of Domain from configuration file
 $Domain=$vms[0].Domain
 
-if($Domain)
-{
-Write-Host "---------------Domain Authentication Settings---------------"
-$DomainUserName=$vms[0].DomainUserName
-$DomainUserPassword=$vms[0].DomainUserPassword
+if($Domain){
+    Write-Host "---------------Domain Authentication Settings---------------"
+    $DomainUserName=$vms[0].DomainUserName
+    $DomainUserPassword=$vms[0].DomainUserPassword
+
     # For Cluster1
-	if ("$ClusterName_1")
-	{
-		foreach ($vm in $vms) 
-		{
+	if ("$ClusterName_1"){
+		foreach ($vm in $vms){
 			# Get ESXi host lists of Cluster
 			$vSphereHost = $vm.vSphereHost_Cluster1
-			if("$vSphereHost")
-			{
+			if("$vSphereHost"){
 				DoCommand-WithConfirm "Get-VMHost `"$vSphereHost`" | Get-VMHostAuthentication | Set-VMHostAuthentication -JoinDomain -Domain `"$Domain`" -User `"$DomainUserName`" -Password `"$DomainUserPassword`" "    " Are you sure to join `"$vSphereHost`" to domain[`"$Domain`"] ??" $true
 			}
 		}
 	}
 
     # For Cluster2
-	if ("$ClusterName_2")
-	{
-		foreach ($vm in $vms) 
-		{
+	if ("$ClusterName_2"){
+		foreach ($vm in $vms){
 			# Get ESXi host lists of Cluster
 			$vSphereHost = $vm.vSphereHost_Cluster2
-			if("$vSphereHost")
-			{
+			if("$vSphereHost"){
 				DoCommand-WithConfirm "Get-VMHost `"$vSphereHost`" | Get-VMHostAuthentication | Set-VMHostAuthentication -JoinDomain -Domain `"$Domain`" -User `"$DomainUserName`" -Password `"$DomainUserPassword`" "    " Are you sure to join `"$vSphereHost`" to domain[`"$Domain`"] ??" $true
 			}
 		}
 	}
 
     # For Cluster3
-	if ("$ClusterName_3")
-	{
-		foreach ($vm in $vms) 
-		{
+	if ("$ClusterName_3"){
+		foreach ($vm in $vms){
 			# Get ESXi host lists of Cluster
 			$vSphereHost = $vm.vSphereHost_Cluster3
-			if("$vSphereHost")
-			{
+			if("$vSphereHost"){
 				DoCommand-WithConfirm "Get-VMHost `"$vSphereHost`" | Get-VMHostAuthentication | Set-VMHostAuthentication -JoinDomain -Domain `"$Domain`" -User `"$DomainUserName`" -Password `"$DomainUserPassword`" "    " Are you sure to join `"$vSphereHost`" to domain[`"$Domain`"] ??" $true
 			}
 		}
@@ -659,13 +542,10 @@ $DomainUserPassword=$vms[0].DomainUserPassword
 
     Write-Host "---------------Move to Maintenace mode---------------"
 	$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to set host Maintenace mode ??",$choice,0)
-	if ("$answer".Equals("0"))
-	{	
-		foreach ($cl in $vms)
-		{
+	if ("$answer".Equals("0")){	
+		foreach ($cl in $vms){
 			$ClusterName=$cl.ClusterName
-			if ($ClusterName)
-			{
+			if ($ClusterName){
     			# Except hosts on which are running VMs
 				$EXCLUDE_ESXHOST = Get-VM -Location $ClusterName | Where-Object {$_.PowerState -eq 'PoweredOn'} | ForEach-Object {$_.Host}
 				$EXCLUDE_ESXHOST = $EXCLUDE_ESXHOST -join ","
@@ -681,8 +561,7 @@ $DomainUserPassword=$vms[0].DomainUserPassword
 ## Note that this would be done before disable Root-Login
 ## Load Scripts path 
 $USERADD_SCRIPT = ("$ScriptPath\create-localuser.ps1")
-if(Test-Path "$USERADD_SCRIPT") 
-{
+if(Test-Path "$USERADD_SCRIPT") {
 	Write-Host "---------------Added user to ESXi hosts---------------"
     invoke-expression -Command .\$USERADD_SCRIPT
 }
@@ -692,13 +571,10 @@ if(Test-Path "$USERADD_SCRIPT")
 Write-Host "---------------Reboot ESXi hosts---------------"
 timeout 60
 $answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to reboot ESXi Hosts ??",$choice,0)
-if ("$answer".Equals("0"))
-{	
-	foreach ($cl in $vms)
-	{
+if ("$answer".Equals("0")){	
+	foreach ($cl in $vms){
 		$ClusterName=$cl.ClusterName
-		if ($ClusterName)
-		{
+		if ($ClusterName){
     		# Except hosts on which are running VMs
 			$EXCLUDE_RESTERTESXHOST = Get-VM -Location $ClusterName | Where-Object {$_.PowerState -eq 'PoweredOn'} | ForEach-Object {$_.Host}
 			$EXCLUDE_RESTERTESXHOST = $EXCLUDE_RESTERTESXHOST -join ","
@@ -712,103 +588,88 @@ if ("$answer".Equals("0"))
 
 # Execute TeraTerm Macro to disable Root-Login to ESXi hosts
 $answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to run TeraTerm macro to disable Root-Login ??",$choice,0)
-if ("$answer".Equals("0"))
-{	
-[System.String]$teraTTLFile = "$ScriptPath\teraTarmMacroTTL.ttl"
-[System.String]$teraMacroExe = $vms[0].Teraterm_Path
+if ("$answer".Equals("0")){	
+    [System.String]$teraTTLFile = "$ScriptPath\teraTarmMacroTTL.ttl"
+    [System.String]$teraMacroExe = $vms[0].Teraterm_Path
+
     # For Cluster1
-	foreach ($vm in $vms) 
-	{
+	foreach ($vm in $vms){
 		$vSphereHost = $vm.vSphereHost_Cluster1
-		if("$vSphereHost") 
-		{
+		if("$vSphereHost"){
 			[System.String]$teraLog = "$ScriptPath\logs\Auto-Configuration_$vSphereHost.rootpermit.log"
-			Write-Output ("Strconcat MSG `'$vSphereHost /ssh /2 /nosecuritywarning /auth=challenge /user=ssmon /passwd=$vSphereHostPassword`' ")                  | out-file $teraTTLFile Default
-			Write-Output ("Connect MSG")                                                                                                                          | out-file $teraTTLFile Default -append
-			Write-Output "wait `'#`'"                                                                                                                             | out-file $teraTTLFile Default -append
-			Write-Output ("logopen `'" + $teraLog + "`' 0 1")                                                                                                     | out-file $teraTTLFile Default -append
-			Write-Output "sendln `'uname -n`'"                                                                                                                    | out-file $teraTTLFile Default -append
-			Write-Output "wait `'#`'"                                                                                                                             | out-file $teraTTLFile Default -append
-			Write-Output "sendln `'sed -i -e `"s/PermitRootLogin yes/PermitRootLogin no/g`" /etc/ssh/sshd_config`'"                                               | out-file $teraTTLFile Default -append
-			Write-Output "wait `'#`'"                                                                                                                             | out-file $teraTTLFile Default -append
-			Write-Output "sendln `'/etc/init.d/SSH restart`'"                                                                                                     | out-file $teraTTLFile Default -append
-			Write-Output ("logclose")                                                                                                                             | out-file $teraTTLFile Default -append
-			Write-Output "sendln `'exit`'"                                                                                                                        | out-file $teraTTLFile Default -append
+			Write-Output ("Strconcat MSG `'$vSphereHost /ssh /2 /nosecuritywarning /auth=challenge /user=ssmon /passwd=$vSphereHostPassword`' ") | out-file $teraTTLFile Default
+			Write-Output ("Connect MSG") | out-file $teraTTLFile Default -append
+			Write-Output "wait `'#`'" | out-file $teraTTLFile Default -append
+			Write-Output ("logopen `'" + $teraLog + "`' 0 1") | out-file $teraTTLFile Default -append
+			Write-Output "sendln `'uname -n`'" | out-file $teraTTLFile Default -append
+			Write-Output "wait `'#`'" | out-file $teraTTLFile Default -append
+			Write-Output "sendln `'sed -i -e `"s/PermitRootLogin yes/PermitRootLogin no/g`" /etc/ssh/sshd_config`'" | out-file $teraTTLFile Default -append
+			Write-Output "wait `'#`'" | out-file $teraTTLFile Default -append
+			Write-Output "sendln `'/etc/init.d/SSH restart`'" | out-file $teraTTLFile Default -append
+			Write-Output ("logclose") | out-file $teraTTLFile Default -append
+			Write-Output "sendln `'exit`'" | out-file $teraTTLFile Default -append
 
 			Start-Process -FilePath $teraMacroExe -ArgumentList $teraTTLFile -Wait
-			
 			Remove-Item "$ScriptPath\teraTarmMacroTTL.ttl"
-
 		}
 	}
 
     # For Cluster2
-	foreach ($vm in $vms) 
-	{
+	foreach ($vm in $vms){
 		$vSphereHost = $vm.vSphereHost_Cluster2
-		if("$vSphereHost") 
-		{
+		if("$vSphereHost"){
 			[System.String]$teraLog = "$ScriptPath\logs\Auto-Configuration_$vSphereHost.rootpermit.log"
-			Write-Output ("Strconcat MSG `'$vSphereHost /ssh /2 /nosecuritywarning /auth=challenge /user=ssmon /passwd=$vSphereHostPassword`' ")                  | out-file $teraTTLFile Default
-			Write-Output ("Connect MSG")                                                                                                                          | out-file $teraTTLFile Default -append
-			Write-Output "wait `'#`'"                                                                                                                             | out-file $teraTTLFile Default -append
-			Write-Output ("logopen `'" + $teraLog + "`' 0 1")                                                                                                     | out-file $teraTTLFile Default -append
-			Write-Output "sendln `'uname -n`'"                                                                                                                    | out-file $teraTTLFile Default -append
-			Write-Output "wait `'#`'"                                                                                                                             | out-file $teraTTLFile Default -append
-			Write-Output "sendln `'sed -i -e `"s/PermitRootLogin yes/PermitRootLogin no/g`" /etc/ssh/sshd_config`'"                                               | out-file $teraTTLFile Default -append
-			Write-Output "wait `'#`'"                                                                                                                             | out-file $teraTTLFile Default -append
-			Write-Output "sendln `'/etc/init.d/SSH restart`'"                                                                                                     | out-file $teraTTLFile Default -append
-			Write-Output ("logclose")                                                                                                                             | out-file $teraTTLFile Default -append
-			Write-Output "sendln `'exit`'"                                                                                                                        | out-file $teraTTLFile Default -append
+			Write-Output ("Strconcat MSG `'$vSphereHost /ssh /2 /nosecuritywarning /auth=challenge /user=ssmon /passwd=$vSphereHostPassword`' ") | out-file $teraTTLFile Default
+			Write-Output ("Connect MSG") | out-file $teraTTLFile Default -append
+			Write-Output "wait `'#`'" | out-file $teraTTLFile Default -append
+			Write-Output ("logopen `'" + $teraLog + "`' 0 1") | out-file $teraTTLFile Default -append
+			Write-Output "sendln `'uname -n`'" | out-file $teraTTLFile Default -append
+			Write-Output "wait `'#`'" | out-file $teraTTLFile Default -append
+			Write-Output "sendln `'sed -i -e `"s/PermitRootLogin yes/PermitRootLogin no/g`" /etc/ssh/sshd_config`'" | out-file $teraTTLFile Default -append
+			Write-Output "wait `'#`'" | out-file $teraTTLFile Default -append
+			Write-Output "sendln `'/etc/init.d/SSH restart`'" | out-file $teraTTLFile Default -append
+			Write-Output ("logclose") | out-file $teraTTLFile Default -append
+			Write-Output "sendln `'exit`'" | out-file $teraTTLFile Default -append
 
 			Start-Process -FilePath $teraMacroExe -ArgumentList $teraTTLFile -Wait
-			
 			Remove-Item "$ScriptPath\teraTarmMacroTTL.ttl"
 		}
 	}	
 	
     # For Cluster3	
-	foreach ($vm in $vms) 
-	{
+	foreach ($vm in $vms){
 		$vSphereHost = $vm.vSphereHost_Cluster3
-		if("$vSphereHost") 
-		{
+		if("$vSphereHost"){
 			[System.String]$teraLog = "$ScriptPath\logs\Auto-Configuration_$vSphereHost.rootpermit.log"
-			Write-Output ("Strconcat MSG `'$vSphereHost /ssh /2 /nosecuritywarning /auth=challenge /user=ssmon /passwd=$vSphereHostPassword`' ")                  | out-file $teraTTLFile Default
-			Write-Output ("Connect MSG")                                                                                                                          | out-file $teraTTLFile Default -append
-			Write-Output "wait `'#`'"                                                                                                                             | out-file $teraTTLFile Default -append
-			Write-Output ("logopen `'" + $teraLog + "`' 0 1")                                                                                                     | out-file $teraTTLFile Default -append
-			Write-Output "sendln `'uname -n`'"                                                                                                                    | out-file $teraTTLFile Default -append
-			Write-Output "wait `'#`'"                                                                                                                             | out-file $teraTTLFile Default -append
-			Write-Output "sendln `'sed -i -e `"s/PermitRootLogin yes/PermitRootLogin no/g`" /etc/ssh/sshd_config`'"                                               | out-file $teraTTLFile Default -append
-			Write-Output "wait `'#`'"                                                                                                                             | out-file $teraTTLFile Default -append
-			Write-Output "sendln `'/etc/init.d/SSH restart`'"                                                                                                     | out-file $teraTTLFile Default -append
-			Write-Output ("logclose")                                                                                                                             | out-file $teraTTLFile Default -append
-			Write-Output "sendln `'exit`'"                                                                                                                        | out-file $teraTTLFile Default -append
+			Write-Output ("Strconcat MSG `'$vSphereHost /ssh /2 /nosecuritywarning /auth=challenge /user=ssmon /passwd=$vSphereHostPassword`' ") | out-file $teraTTLFile Default
+			Write-Output ("Connect MSG") | out-file $teraTTLFile Default -append
+			Write-Output "wait `'#`'" | out-file $teraTTLFile Default -append
+			Write-Output ("logopen `'" + $teraLog + "`' 0 1") | out-file $teraTTLFile Default -append
+			Write-Output "sendln `'uname -n`'" | out-file $teraTTLFile Default -append
+			Write-Output "wait `'#`'" | out-file $teraTTLFile Default -append
+			Write-Output "sendln `'sed -i -e `"s/PermitRootLogin yes/PermitRootLogin no/g`" /etc/ssh/sshd_config`'" | out-file $teraTTLFile Default -append
+			Write-Output "wait `'#`'" | out-file $teraTTLFile Default -append
+			Write-Output "sendln `'/etc/init.d/SSH restart`'" | out-file $teraTTLFile Default -append
+			Write-Output ("logclose") | out-file $teraTTLFile Default -append
+			Write-Output "sendln `'exit`'" | out-file $teraTTLFile Default -append
 
-			Start-Process -FilePath $teraMacroExe -ArgumentList $teraTTLFile -Wait
-			
+			Start-Process -FilePath $teraMacroExe -ArgumentList $teraTTLFile -Wait			
 			Remove-Item "$ScriptPath\teraTarmMacroTTL.ttl"
 		}
-	}		
-	
-	
+	}
 }
 
 
 Write-Host "---------------Create vDS---------------"
 $answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to configure vDS(Distributed Switch) ??",$choice,0)
-if ("$answer".Equals("0"))
-{
+if ("$answer".Equals("0")){
 	$dvSwitchName=$vms[0].dvSwitchName
-	if("$dvSwitchName")
-	{
+	if("$dvSwitchName"){
         # Create vDS
 		$dvSwitch_Version=$vms[0].dvSwitch_Version
 		$dvSwitch_Discovery_Protocol=$vms[0].dvSwitch_Discovery_Protocol
 		$dvSwitchUplinkName=$vms[0].dvSwitchUplinkName
 		$dvSwitch_MTU=$vms[0].dvSwitch_MTU
-
 
 		$dvSwitch_Uplink_Number=$vms[0].dvSwitch_Uplink_Number
 		$target_vmnic=$vms[0].dvSwitch_vmnic -split ","
@@ -816,41 +677,27 @@ if ("$answer".Equals("0"))
 		$target_vmnic_2=$target_vmnic[1]
 
 		$answer = $host.ui.PromptForChoice("Are you sure to create ","`vDS[ $dvSwitchName ] with :version[ $dvSwitch_Version ]:MTU[ $dvSwitch_MTU ] on DataCenter[ $DatacenterName ] ??",$choice,0)
-		if ("$answer".Equals("0"))
-		{
-			if( ($dvSwitch_MTU) -And ($dvSwitch_Discovery_Protocol) -And ($dvSwitch_Uplink_Number) -And ($dvSwitch_Version) )
-			{
+		if ("$answer".Equals("0")){
+			if( ($dvSwitch_MTU) -And ($dvSwitch_Discovery_Protocol) -And ($dvSwitch_Uplink_Number) -And ($dvSwitch_Version) ){
 				New-VDSwitch -Name $dvSwitchName -Location $DatacenterName -NumUplinkPorts $dvSwitch_Uplink_Number -LinkDiscoveryProtocol $dvSwitch_Discovery_Protocol -LinkDiscoveryProtocolOperation Listen -Mtu $dvSwitch_MTU -Version $dvSwitch_Version
-			}
-			elseif( (!$dvSwitch_MTU) -And ($dvSwitch_Discovery_Protocol) -And ($dvSwitch_Uplink_Number) -And ($dvSwitch_Version) )
-			{
+			}elseif( (!$dvSwitch_MTU) -And ($dvSwitch_Discovery_Protocol) -And ($dvSwitch_Uplink_Number) -And ($dvSwitch_Version) ){
 				New-VDSwitch -Name $dvSwitchName -Location $DatacenterName -NumUplinkPorts $dvSwitch_Uplink_Number -LinkDiscoveryProtocol $dvSwitch_Discovery_Protocol -LinkDiscoveryProtocolOperation Listen -Version $dvSwitch_Version
-			}
-			elseif( (!$dvSwitch_Discovery_Protocol) -And ($dvSwitch_Uplink_Number) -And ($dvSwitch_Version) )
-			{
+			}elseif( (!$dvSwitch_Discovery_Protocol) -And ($dvSwitch_Uplink_Number) -And ($dvSwitch_Version) ){
 				New-VDSwitch -Name $dvSwitchName -Location $DatacenterName -NumUplinkPorts $dvSwitch_Uplink_Number -Version $dvSwitch_Version
-			}
-			else
-			{
+			}else{
 				New-VDSwitch -Name $dvSwitchName -Location $DatacenterName -NumUplinkPorts $dvSwitch_Uplink_Number
 			}
-		}
-		else
-		{
+		}else{
 			Write-Host "`nSkipped to create vDS[ $dvSwitchName ]." -fore Red
 		}
 		
 		# vDS UpLink Name
-		if($dvSwitchUplinkName)
-		{		
+		if($dvSwitchUplinkName){		
 			$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to configure UpLink [ $dvSwitchUplinkName ] to vDS[ $dvSwitchName ] ??",$choice,0)
-			if ("$answer".Equals("0"))
-			{
+			if ("$answer".Equals("0")){
 				# Modify vDS UpLink Name
 				Get-VDPortgroup -Name "dvSwitch0-DVUplinks-*" | Set-VDPortgroup -Name $dvSwitchUplinkName 
-			}
-			else
-			{
+			}else{
 				Write-Host "`n Skipped to configure vDS UpLink Name." -fore Red
 			}
 		}
@@ -862,36 +709,34 @@ if ("$answer".Equals("0"))
 		[System.Int64]$dvSwitch_ShapingPolicy_In_PeakBandwidth=([System.Int64]$vms[0].dvSwitch_ShapingPolicy_In_PeakBandwidth * 1000)
 		[System.Int64]$dvSwitch_ShapingPolicy_In_BurstSize=([System.Int64]$vms[0].dvSwitch_ShapingPolicy_In_BurstSize * 1024)
 
-		if( ($dvSwitch_ShapingPolicy_In.Equals("FALSE")) -Or ($dvSwitch_ShapingPolicy_In.Equals("false")) )
-		{	$dvSwitch_ShapingPolicy_In=$false	}
-		else
-		{	$dvSwitch_ShapingPolicy_In=$true	}
+		if( ($dvSwitch_ShapingPolicy_In.Equals("FALSE")) -Or ($dvSwitch_ShapingPolicy_In.Equals("false")) ){
+            $dvSwitch_ShapingPolicy_In=$false	
+        }else{
+            $dvSwitch_ShapingPolicy_In=$true
+        }
 
 		$dvSwitch_ShapingPolicy_Out=$vms[0].dvSwitch_ShapingPolicy_Out
 		$dvSwitch_ShapingPolicy_Out_check=$vms[0].dvSwitch_ShapingPolicy_Out
 		[System.Int64]$dvSwitch_ShapingPolicy_Out_AverageBandwidth=([System.Int64]$vms[0].dvSwitch_ShapingPolicy_Out_AverageBandwidth * 1000)
 		[System.Int64]$dvSwitch_ShapingPolicy_Out_PeakBandwidth=([System.Int64]$vms[0].dvSwitch_ShapingPolicy_Out_PeakBandwidth * 1000)
 		[System.Int64]$dvSwitch_ShapingPolicy_Out_BurstSize=([System.Int64]$vms[0].dvSwitch_ShapingPolicy_Out_BurstSize * 1024)
-		if( ($dvSwitch_ShapingPolicy_Out.Equals("FALSE")) -Or ($dvSwitch_ShapingPolicy_Out.Equals("false")) )
-		{	$dvSwitch_ShapingPolicy_Out=$false	}
-		else
-		{	$dvSwitch_ShapingPolicy_Out=$true	}
+		if( ($dvSwitch_ShapingPolicy_Out.Equals("FALSE")) -Or ($dvSwitch_ShapingPolicy_Out.Equals("false")) ){
+            $dvSwitch_ShapingPolicy_Out=$false
+        }else{
+            $dvSwitch_ShapingPolicy_Out=$true
+        }
 
 		
-		if( ($dvSwitch_ShapingPolicy_Out_check) -And ($dvSwitch_ShapingPolicy_Out_AverageBandwidth) -And ($dvSwitch_ShapingPolicy_Out_PeakBandwidth) -And ($dvSwitch_ShapingPolicy_Out_BurstSize) )
-		{
+		if( ($dvSwitch_ShapingPolicy_Out_check) -And ($dvSwitch_ShapingPolicy_Out_AverageBandwidth) -And ($dvSwitch_ShapingPolicy_Out_PeakBandwidth) -And ($dvSwitch_ShapingPolicy_Out_BurstSize) ){
 			$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to modify OutBand Traffic of vDS [ $dvSwitchName ] ??",$choice,0)
-			if ("$answer".Equals("0"))
-			{
+			if ("$answer".Equals("0")){
 				Get-VDSwitch $dvSwitchName | Get-VDTrafficShapingPolicy -Direction Out | Set-VDTrafficShapingPolicy -Enabled $dvSwitch_ShapingPolicy_Out -AverageBandwidth $dvSwitch_ShapingPolicy_Out_AverageBandwidth -PeakBandwidth $dvSwitch_ShapingPolicy_Out_PeakBandwidth -BurstSize $dvSwitch_ShapingPolicy_Out_BurstSize
 		 	}
 		 }
 		 
-		if( ($dvSwitch_ShapingPolicy_In_check) -And ($dvSwitch_ShapingPolicy_In_AverageBandwidth) -And ($dvSwitch_ShapingPolicy_In_PeakBandwidth) -And ($dvSwitch_ShapingPolicy_In_BurstSize) )
-		{
+		if( ($dvSwitch_ShapingPolicy_In_check) -And ($dvSwitch_ShapingPolicy_In_AverageBandwidth) -And ($dvSwitch_ShapingPolicy_In_PeakBandwidth) -And ($dvSwitch_ShapingPolicy_In_BurstSize) ){
 			$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to modify InBand Traffic of vDS [ $dvSwitchName ] ??",$choice,0)
-			if ("$answer".Equals("0"))
-			{
+			if ("$answer".Equals("0")){
 				Get-VDSwitch $dvSwitchName | Get-VDTrafficShapingPolicy -Direction In | Set-VDTrafficShapingPolicy -Enabled $dvSwitch_ShapingPolicy_In -AverageBandwidth $dvSwitch_ShapingPolicy_In_AverageBandwidth -PeakBandwidth $dvSwitch_ShapingPolicy_In_PeakBandwidth -BurstSize $dvSwitch_ShapingPolicy_In_BurstSize
 		 	}
 		 }
@@ -903,36 +748,33 @@ if ("$answer".Equals("0"))
 		$dvSwitch_NicTeamingPolicy_FailbackEnabled=$vms[0].dvSwitch_NicTeamingPolicy_FailbackEnabled
 		$dvSwitch_NicTeamingPolicy_NotifySwitches_check=$vms[0].dvSwitch_NicTeamingPolicy_NotifySwitches
 		$dvSwitch_NicTeamingPolicy_FailbackEnabled_check=$vms[0].dvSwitch_NicTeamingPolicy_FailbackEnabled
-		if( ($dvSwitch_NicTeamingPolicy_NotifySwitches.Equals("FALSE")) -Or ($dvSwitch_NicTeamingPolicy_NotifySwitches.Equals("false")) )
-		{	$dvSwitch_NicTeamingPolicy_NotifySwitches=$false	}
-		else
-		{	$dvSwitch_NicTeamingPolicy_NotifySwitches=$true	}
+		if( ($dvSwitch_NicTeamingPolicy_NotifySwitches.Equals("FALSE")) -Or ($dvSwitch_NicTeamingPolicy_NotifySwitches.Equals("false")) ){
+            $dvSwitch_NicTeamingPolicy_NotifySwitches=$false
+        }else{
+            $dvSwitch_NicTeamingPolicy_NotifySwitches=$true
+        }
 
-		if( ($dvSwitch_NicTeamingPolicy_FailbackEnabled.Equals("FALSE")) -Or ($dvSwitch_NicTeamingPolicy_FailbackEnabled.Equals("false")) )
-		{	$dvSwitch_NicTeamingPolicy_FailbackEnabled=$false	}
-		else
-		{	$dvSwitch_NicTeamingPolicy_FailbackEnabled=$true	}
+		if( ($dvSwitch_NicTeamingPolicy_FailbackEnabled.Equals("FALSE")) -Or ($dvSwitch_NicTeamingPolicy_FailbackEnabled.Equals("false")) ){
+            $dvSwitch_NicTeamingPolicy_FailbackEnabled=$false
+        }else{
+            $dvSwitch_NicTeamingPolicy_FailbackEnabled=$true
+        }
 
 		$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to modify NIC-Teaming of vDS [ $dvSwitchName ]",$choice,0)
-		if ("$answer".Equals("0"))
-		{
-			if($dvSwitch_NicTeamingPolicy_LoadBalancingPolicy)
-			{
+		if ("$answer".Equals("0")){
+			if($dvSwitch_NicTeamingPolicy_LoadBalancingPolicy){
 			 	Get-VDSwitch $dvSwitchName  | Get-VDUplinkTeamingPolicy | Set-VDUplinkTeamingPolicy -LoadBalancingPolicy $dvSwitch_NicTeamingPolicy_LoadBalancingPolicy -ActiveUplinkPort dvUplink1,dvUplink2 
 		 	}
 		 	
-			if($dvSwitch_NicTeamingPolicy_NetworkFailoverDetectionPolicy)
-			{
+			if($dvSwitch_NicTeamingPolicy_NetworkFailoverDetectionPolicy){
 			 	Get-VDSwitch $dvSwitchName  | Get-VDUplinkTeamingPolicy | Set-VDUplinkTeamingPolicy -FailoverDetectionPolicy $dvSwitch_NicTeamingPolicy_NetworkFailoverDetectionPolicy  -ActiveUplinkPort dvUplink1,dvUplink2 
 		 	}
 
-			if($dvSwitch_NicTeamingPolicy_NotifySwitches_check)
-			{
+			if($dvSwitch_NicTeamingPolicy_NotifySwitches_check){
 			 	Get-VDSwitch $dvSwitchName  | Get-VDUplinkTeamingPolicy | Set-VDUplinkTeamingPolicy -NotifySwitches $dvSwitch_NicTeamingPolicy_NotifySwitches -ActiveUplinkPort dvUplink1,dvUplink2 
 		 	}
 
-			if($dvSwitch_NicTeamingPolicy_FailbackEnabled_check)
-			{
+			if($dvSwitch_NicTeamingPolicy_FailbackEnabled_check){
 			 	Get-VDSwitch $dvSwitchName  | Get-VDUplinkTeamingPolicy | Set-VDUplinkTeamingPolicy -FailBack $dvSwitch_NicTeamingPolicy_FailbackEnabled -ActiveUplinkPort dvUplink1,dvUplink2
 		 	}
 		 	
@@ -946,35 +788,34 @@ if ("$answer".Equals("0"))
 		$dvSwitch_Security_MacChanges_check=$vms[0].dvSwitch_Security_MacChanges
 		$dvSwitch_Security_ForgedTransmits_check=$vms[0].dvSwitch_Security_ForgedTransmits
 
-		if( ($dvSwitch_Security_AllowPromiscuous.Equals("FALSE")) -Or ($dvSwitch_Security_AllowPromiscuous.Equals("false")) )
-		{	$dvSwitch_Security_AllowPromiscuous=$false	}
-		else
-		{	$dvSwitch_Security_AllowPromiscuous=$true	}
+		if( ($dvSwitch_Security_AllowPromiscuous.Equals("FALSE")) -Or ($dvSwitch_Security_AllowPromiscuous.Equals("false")) ){
+            $dvSwitch_Security_AllowPromiscuous=$false
+        }else{
+            $dvSwitch_Security_AllowPromiscuous=$true
+        }
 
-		if( ($dvSwitch_Security_MacChanges.Equals("FALSE")) -Or ($dvSwitch_Security_MacChanges.Equals("false")) )
-		{	$dvSwitch_Security_MacChanges=$false	}
-		else
-		{	$dvSwitch_Security_MacChanges=$true	}
+		if( ($dvSwitch_Security_MacChanges.Equals("FALSE")) -Or ($dvSwitch_Security_MacChanges.Equals("false")) ){
+            $dvSwitch_Security_MacChanges=$false
+        }else{
+            $dvSwitch_Security_MacChanges=$true
+        }
 
-		if( ($dvSwitch_Security_ForgedTransmits.Equals("FALSE")) -Or ($dvSwitch_Security_ForgedTransmits.Equals("false")) )
-		{	$dvSwitch_Security_ForgedTransmits=$false	}
-		else
-		{	$dvSwitch_Security_ForgedTransmits=$true	}
+		if( ($dvSwitch_Security_ForgedTransmits.Equals("FALSE")) -Or ($dvSwitch_Security_ForgedTransmits.Equals("false")) ){
+            $dvSwitch_Security_ForgedTransmits=$false
+        }else{
+            $dvSwitch_Security_ForgedTransmits=$true
+        }
 
 
 		$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to modify security of vDS [ $dvSwitchName ] ??",$choice,0)
-		if ("$answer".Equals("0"))
-		{
-			if($dvSwitch_Security_AllowPromiscuous_check)
-			{
+		if ("$answer".Equals("0")){
+			if($dvSwitch_Security_AllowPromiscuous_check){
 				Get-VDSwitch $dvSwitchName | Get-VDSecurityPolicy | Set-VDSecurityPolicy -AllowPromiscuous $dvSwitch_Security_AllowPromiscuous
 			}
-			if($dvSwitch_Security_MacChanges_check)
-			{
+			if($dvSwitch_Security_MacChanges_check){
 				Get-VDSwitch $dvSwitchName | Get-VDSecurityPolicy | Set-VDSecurityPolicy -MacChanges $dvSwitch_Security_MacChanges
 			}
-			if($dvSwitch_Security_ForgedTransmits_check)
-			{
+			if($dvSwitch_Security_ForgedTransmits_check){
 				Get-VDSwitch $dvSwitchName | Get-VDSecurityPolicy | Set-VDSecurityPolicy -ForgedTransmits $dvSwitch_Security_ForgedTransmits
 			}
 		 }
@@ -982,142 +823,106 @@ if ("$answer".Equals("0"))
 		
 		# Add hosts to vDS
         ## For Cluster1
-		if ("$ClusterName_1")
-		{
+		if ("$ClusterName_1"){
 			$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to join hosts of Cluster[ $ClusterName_1 ] to vDS [ $dvSwitchName ] ??",$choice,0)
-			if ("$answer".Equals("0"))
-			{
-				foreach ($vm in $vms) 
-				{
+			if ("$answer".Equals("0")){
+				foreach ($vm in $vms){
 					$vSphereHost = $vm.vSphereHost_Cluster1				
-					if($vSphereHost) 
-					{
+					if($vSphereHost){
 						Get-VDSwitch -Name $dvSwitchName | Add-VDSwitchVMHost -VMHost $vSphereHost 
 					}
 				}
-			}
-			else
-			{
+			}else{
 				Write-Host "`nSkipped to configurations of hosts in Cluster[ $ClusterName_1 ]." -fore Red
 			}
 
 			$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to add [ $target_vmnic_1 ] and [ $target_vmnic_2 ] of [ $ClusterName_1 ] to vDS[ $dvSwitchName ] ??",$choice,0)
-			if ("$answer".Equals("0"))
-			{
+			if ("$answer".Equals("0")){
 				$vmhostNetworkAdapter = Get-VMHost -Location "$ClusterName_1" | Get-VMHostNetworkAdapter -Physical -Name "$target_vmnic_1"
 				Get-VDSwitch $dvSwitchName | Add-VDSwitchPhysicalNetworkAdapter -VMHostNetworkAdapter $vmhostNetworkAdapter -Confirm:$false
 
 				$vmhostNetworkAdapter = Get-VMHost -Location "$ClusterName_1" | Get-VMHostNetworkAdapter -Physical -Name "$target_vmnic_2"
 				Get-VDSwitch $dvSwitchName | Add-VDSwitchPhysicalNetworkAdapter -VMHostNetworkAdapter $vmhostNetworkAdapter -Confirm:$false
-			}
-			else
-			{
+			}else{
 				Write-Host "`nSkipped to configurations of hosts in Cluster[ $ClusterName_1 ]." -fore Red
 			}
 		}
 
         ## For Cluster2
-		if ("$ClusterName_2")
-		{
+		if ("$ClusterName_2"){
 			$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to join hosts of Cluster[ $ClusterName_2 ] to vDS [ $dvSwitchName ] ??",$choice,0)
-			if ("$answer".Equals("0"))
-			{
-				foreach ($vm in $vms) 
-				{
+			if ("$answer".Equals("0")){
+				foreach ($vm in $vms){
 					$vSphereHost = $vm.vSphereHost_Cluster2
-					if($vSphereHost) 
-					{
+					if($vSphereHost){
 						Get-VDSwitch -Name $dvSwitchName | Add-VDSwitchVMHost -VMHost $vSphereHost 
 					}
 				}
-			}
-			else
-			{
+			}else{
 				Write-Host "`nSkipped to configurations of hosts in Cluster[ $ClusterName_2 ]." -fore Red
 			}
 
 			$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to add [ $target_vmnic_1 ] and [ $target_vmnic_2 ] of [ $ClusterName_2 ] to vDS[ $dvSwitchName ] ??",$choice,0)
-			if ("$answer".Equals("0"))
-			{
+			if ("$answer".Equals("0")){
 				$vmhostNetworkAdapter = Get-VMHost -Location "$ClusterName_2" | Get-VMHostNetworkAdapter -Physical -Name "$target_vmnic_1"
 				Get-VDSwitch $dvSwitchName | Add-VDSwitchPhysicalNetworkAdapter -VMHostNetworkAdapter $vmhostNetworkAdapter -Confirm:$false
 
 				$vmhostNetworkAdapter = Get-VMHost -Location "$ClusterName_2" | Get-VMHostNetworkAdapter -Physical -Name "$target_vmnic_2"
 				Get-VDSwitch $dvSwitchName | Add-VDSwitchPhysicalNetworkAdapter -VMHostNetworkAdapter $vmhostNetworkAdapter -Confirm:$false
-			}
-			else
-			{
+			}else{
 				Write-Host "`nSkipped to configurations of hosts in Cluster[ $ClusterName_2 ]." -fore Red
 			}
 		}
 
         ## For Cluster3
-		if ("$ClusterName_3")
-		{
+		if ("$ClusterName_3"){
 			$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to join hosts of Cluster[ $ClusterName_3 ] to vDS [ $dvSwitchName ] ??",$choice,0)
-			if ("$answer".Equals("0"))
-			{
-				foreach ($vm in $vms) 
-				{
+			if ("$answer".Equals("0")){
+				foreach ($vm in $vms){
 					$vSphereHost = $vm.vSphereHost_Cluster3		
-					if($vSphereHost) 
-					{
+					if($vSphereHost) {
 						Get-VDSwitch -Name $dvSwitchName | Add-VDSwitchVMHost -VMHost $vSphereHost 
 					}
 				}
-			}
-			else
-			{
+			}else{
 				Write-Host "`nSkipped to configurations of hosts in Cluster[ $ClusterName_3 ]." -fore Red
 			}
 
 			$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to add [ $target_vmnic_1 ] and [ $target_vmnic_2 ] of [ $ClusterName_3 ] to vDS[ $dvSwitchName ] ??",$choice,0)
-			if ("$answer".Equals("0"))
-			{
+			if ("$answer".Equals("0")){
 				$vmhostNetworkAdapter = Get-VMHost -Location "$ClusterName_3" | Get-VMHostNetworkAdapter -Physical -Name "$target_vmnic_1"
 				Get-VDSwitch $dvSwitchName | Add-VDSwitchPhysicalNetworkAdapter -VMHostNetworkAdapter $vmhostNetworkAdapter -Confirm:$false
 
 				$vmhostNetworkAdapter = Get-VMHost -Location "$ClusterName_3" | Get-VMHostNetworkAdapter -Physical -Name "$target_vmnic_2"
 				Get-VDSwitch $dvSwitchName | Add-VDSwitchPhysicalNetworkAdapter -VMHostNetworkAdapter $vmhostNetworkAdapter -Confirm:$false
-			}
-			else
-			{
+			}else{
 				Write-Host "`nSkipped to configurations of hosts in Cluster[ $ClusterName_1 ]." -fore Red
 			}
 		}
 		
 		
 		# Create PortGroup in vDS
-		foreach ($dvs in $vms) 
-			{
+		foreach ($dvs in $vms){
 			$dvSwitch_Portgroup_Name=$dvs.dvSwitch_Portgroup_Name
 			$dvSwitch_Portgroup_VLAN_ID=$dvs.dvSwitch_Portgroup_VLAN_ID
 
-			if("$dvSwitch_Portgroup_Name")
-			{
+			if("$dvSwitch_Portgroup_Name"){
 				$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to add [ $dvSwitch_Portgroup_Name ] to vDS[ $dvSwitchName ] ??",$choice,0)
-				if ("$answer".Equals("0"))
-				{
-					if("$dvSwitch_Portgroup_VLAN_ID")
-					{
+				if ("$answer".Equals("0")){
+					if("$dvSwitch_Portgroup_VLAN_ID"){
 						New-VDPortgroup -Name $dvSwitch_Portgroup_Name -VDSwitch $dvSwitchName -VlanId $dvSwitch_Portgroup_VLAN_ID 
-					}
-					else
-					{
+					}else{
 						New-VDPortgroup -Name $dvSwitch_Portgroup_Name -VDSwitch $dvSwitchName
 					}
 				}
 				
 				# Add configuration of vDS PortGroup to ESXi hosts
                 ## For Cluster1
-				foreach ($vm in $vms) 
-				{
+				foreach ($vm in $vms){
 					$vSphereHost = $vm.vSphereHost_Cluster1
 					$dvSwitch_Portgroup_vmk=$dvs.dvSwitch_Portgroup_vmk					
-					if("$vSphereHost") 
-					{
-						switch($dvSwitch_Portgroup_vmk)
-						{
+					if("$vSphereHost") {
+						switch($dvSwitch_Portgroup_vmk){
 							"vmk0" { 
 								$VMK_IP_Address=$vm.VMK0_IP_Address_Cluster1
 								$VMK_IP_Subnet=$vm.VMK0_IP_Subnet_Cluster1
@@ -1166,8 +971,7 @@ if ("$answer".Equals("0"))
 						}
 												
 						$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to add [ $VMK_IP_Address ] and [ $VMK_IP_Subnet ] to [ $dvSwitch_Portgroup_Name ] in [ $vSphereHost ] ??",$choice,0)
-						if ("$answer".Equals("0"))
-						{
+						if ("$answer".Equals("0")){
 							Get-VMHost $vSphereHost | New-VMHostNetworkAdapter -PortGroup $dvSwitch_Portgroup_Name -VirtualSwitch $dvSwitchName -IP $VMK_IP_Address -SubnetMask $VMK_IP_Subnet 
 						}
 												
@@ -1177,46 +981,43 @@ if ("$answer".Equals("0"))
 						$dvSwitch_Portgroup_vMotion_check=$dvs.dvSwitch_Portgroup_vMotion
 						$dvSwitch_Portgroup_FaultToleranceLogging_check=$dvs.dvSwitch_Portgroup_FaultToleranceLogging
 						$dvSwitch_Portgroup_Management_check=$dvs.dvSwitch_Portgroup_Management
-						if( ($dvSwitch_Portgroup_vMotion.Equals("FALSE")) -Or ($dvSwitch_Portgroup_vMotion.Equals("false")) )
-						{	$dvSwitch_Portgroup_vMotion=$false	}
-						else
-						{	$dvSwitch_Portgroup_vMotion=$true	}
+						if( ($dvSwitch_Portgroup_vMotion.Equals("FALSE")) -Or ($dvSwitch_Portgroup_vMotion.Equals("false")) ){
+                            $dvSwitch_Portgroup_vMotion=$false
+                        }else{
+                            $dvSwitch_Portgroup_vMotion=$true
+                        }
 					
-						if( ($dvSwitch_Portgroup_FaultToleranceLogging.Equals("FALSE")) -Or ($dvSwitch_Portgroup_FaultToleranceLogging.Equals("false")) )
-						{	$dvSwitch_Portgroup_FaultToleranceLogging=$false	}
-						else
-						{	$dvSwitch_Portgroup_FaultToleranceLogging=$true	}
-						if( ($dvSwitch_Portgroup_Management.Equals("FALSE")) -Or ($dvSwitch_Portgroup_Management.Equals("false")) )
-						{	$dvSwitch_Portgroup_Management=$false	}
-						else
-						{	$dvSwitch_Portgroup_Management=$true	}
+						if( ($dvSwitch_Portgroup_FaultToleranceLogging.Equals("FALSE")) -Or ($dvSwitch_Portgroup_FaultToleranceLogging.Equals("false")) ){
+                            $dvSwitch_Portgroup_FaultToleranceLogging=$false
+                        }else{
+                            $dvSwitch_Portgroup_FaultToleranceLogging=$true
+                        }
+						if( ($dvSwitch_Portgroup_Management.Equals("FALSE")) -Or ($dvSwitch_Portgroup_Management.Equals("false")) ){
+                            $dvSwitch_Portgroup_Management=$false
+                        }else{
+                            $dvSwitch_Portgroup_Management=$true
+                        }
 
 						# vMotion,FT,Management Tag Configurations
-						if($dvSwitch_Portgroup_vMotion_check)
-						{
+						if($dvSwitch_Portgroup_vMotion_check){
 							# PortGroup vMotion Tag
 							Get-VMHost $vSphereHost | Get-VMHostNetworkAdapter -vmkernel -Name $dvSwitch_Portgroup_vmk | Set-VMHostNetworkAdapter -VMotionEnabled $dvSwitch_Portgroup_vMotion -Confirm:$false 
 						}
-						if($dvSwitch_Portgroup_FaultToleranceLogging_check)
-						{
+						if($dvSwitch_Portgroup_FaultToleranceLogging_check){
 							Get-VMHost $vSphereHost | Get-VMHostNetworkAdapter -vmkernel -Name $dvSwitch_Portgroup_vmk | Set-VMHostNetworkAdapter -FaultToleranceLoggingEnabled $dvSwitch_Portgroup_FaultToleranceLogging  -Confirm:$false
 						}
-						if($dvSwitch_Portgroup_Management_check)
-						{
+						if($dvSwitch_Portgroup_Management_check){
 							Get-VMHost $vSphereHost | Get-VMHostNetworkAdapter -vmkernel -Name $dvSwitch_Portgroup_vmk | Set-VMHostNetworkAdapter -ManagementTrafficEnabled $dvSwitch_Portgroup_Management -Confirm:$false 
 						}
 					}
 				}
 				
                 ## For Cluster2
-				foreach ($vm in $vms) 
-				{
+				foreach ($vm in $vms){
 					$vSphereHost = $vm.vSphereHost_Cluster2
 					$dvSwitch_Portgroup_vmk=$dvs.dvSwitch_Portgroup_vmk					
-					if("$vSphereHost") 
-					{
-						switch($dvSwitch_Portgroup_vmk)
-						{
+					if("$vSphereHost"){
+						switch($dvSwitch_Portgroup_vmk){
 							"vmk0" { 
 								$VMK_IP_Address=$vm.VMK0_IP_Address_Cluster2
 								$VMK_IP_Subnet=$vm.VMK0_IP_Subnet_Cluster2
@@ -1265,8 +1066,7 @@ if ("$answer".Equals("0"))
 						}
 
 						$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to add [ $VMK_IP_Address ] and [ $VMK_IP_Subnet ] to [ $dvSwitch_Portgroup_Name ] in [ $vSphereHost ] ??",$choice,0)
-						if ("$answer".Equals("0"))
-						{
+						if ("$answer".Equals("0")){
 							Get-VMHost $vSphereHost | New-VMHostNetworkAdapter -PortGroup $dvSwitch_Portgroup_Name -VirtualSwitch $dvSwitchName -IP $VMK_IP_Address -SubnetMask $VMK_IP_Subnet 
 						}
 
@@ -1276,46 +1076,44 @@ if ("$answer".Equals("0"))
 						$dvSwitch_Portgroup_vMotion_check=$dvs.dvSwitch_Portgroup_vMotion
 						$dvSwitch_Portgroup_FaultToleranceLogging_check=$dvs.dvSwitch_Portgroup_FaultToleranceLogging
 						$dvSwitch_Portgroup_Management_check=$dvs.dvSwitch_Portgroup_Management
-						if( ($dvSwitch_Portgroup_vMotion.Equals("FALSE")) -Or ($dvSwitch_Portgroup_vMotion.Equals("false")) )
-						{	$dvSwitch_Portgroup_vMotion=$false	}
-						else
-						{	$dvSwitch_Portgroup_vMotion=$true	}
+						if( ($dvSwitch_Portgroup_vMotion.Equals("FALSE")) -Or ($dvSwitch_Portgroup_vMotion.Equals("false")) ){
+                            $dvSwitch_Portgroup_vMotion=$false
+                        }else{
+                            $dvSwitch_Portgroup_vMotion=$true
+                        }
 					
-						if( ($dvSwitch_Portgroup_FaultToleranceLogging.Equals("FALSE")) -Or ($dvSwitch_Portgroup_FaultToleranceLogging.Equals("false")) )
-						{	$dvSwitch_Portgroup_FaultToleranceLogging=$false	}
-						else
-						{	$dvSwitch_Portgroup_FaultToleranceLogging=$true	}
-						if( ($dvSwitch_Portgroup_Management.Equals("FALSE")) -Or ($dvSwitch_Portgroup_Management.Equals("false")) )
-						{	$dvSwitch_Portgroup_Management=$false	}
-						else
-						{	$dvSwitch_Portgroup_Management=$true	}
+						if( ($dvSwitch_Portgroup_FaultToleranceLogging.Equals("FALSE")) -Or ($dvSwitch_Portgroup_FaultToleranceLogging.Equals("false")) ){
+                            $dvSwitch_Portgroup_FaultToleranceLogging=$false
+                        }else{
+                            $dvSwitch_Portgroup_FaultToleranceLogging=$true
+                        }
+						
+                        if( ($dvSwitch_Portgroup_Management.Equals("FALSE")) -Or ($dvSwitch_Portgroup_Management.Equals("false")) ){
+                            $dvSwitch_Portgroup_Management=$false}
+						else{
+                            $dvSwitch_Portgroup_Management=$true
+                        }
 
 						#vMotion,FT,Management Tag Configurations
-						if($dvSwitch_Portgroup_vMotion_check)
-						{
+						if($dvSwitch_Portgroup_vMotion_check){
 							# PortGroup vMotion Tag
 							Get-VMHost $vSphereHost | Get-VMHostNetworkAdapter -vmkernel -Name $dvSwitch_Portgroup_vmk | Set-VMHostNetworkAdapter -VMotionEnabled $dvSwitch_Portgroup_vMotion -Confirm:$false 
 						}
-						if($dvSwitch_Portgroup_FaultToleranceLogging_check)
-						{
+						if($dvSwitch_Portgroup_FaultToleranceLogging_check){
 							Get-VMHost $vSphereHost | Get-VMHostNetworkAdapter -vmkernel -Name $dvSwitch_Portgroup_vmk | Set-VMHostNetworkAdapter -FaultToleranceLoggingEnabled $dvSwitch_Portgroup_FaultToleranceLogging  -Confirm:$false 
 						}
-						if($dvSwitch_Portgroup_Management_check)
-						{
+						if($dvSwitch_Portgroup_Management_check){
 							Get-VMHost $vSphereHost | Get-VMHostNetworkAdapter -vmkernel -Name $dvSwitch_Portgroup_vmk | Set-VMHostNetworkAdapter -ManagementTrafficEnabled $dvSwitch_Portgroup_Management -Confirm:$false 
 						}
 					}
 				}
 
                 # For Cluster3
-				foreach ($vm in $vms) 
-				{
+				foreach ($vm in $vms){
 					$vSphereHost = $vm.vSphereHost_Cluster3
 					$dvSwitch_Portgroup_vmk=$dvs.dvSwitch_Portgroup_vmk					
-					if("$vSphereHost") 
-					{
-						switch($dvSwitch_Portgroup_vmk)
-						{
+					if("$vSphereHost"){
+						switch($dvSwitch_Portgroup_vmk){
 							"vmk0" { 
 								$VMK_IP_Address=$vm.VMK0_IP_Address_Cluster3
 								$VMK_IP_Subnet=$vm.VMK0_IP_Subnet_Cluster3
@@ -1364,8 +1162,7 @@ if ("$answer".Equals("0"))
 						}
 
 						$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to add [ $VMK_IP_Address ] and [ $VMK_IP_Subnet ] to [ $dvSwitch_Portgroup_Name ] in [ $vSphereHost ] ??",$choice,0)
-						if ("$answer".Equals("0"))
-						{
+						if ("$answer".Equals("0")){
 							Get-VMHost $vSphereHost | New-VMHostNetworkAdapter -PortGroup $dvSwitch_Portgroup_Name -VirtualSwitch $dvSwitchName -IP $VMK_IP_Address -SubnetMask $VMK_IP_Subnet 
 						}
 
@@ -1375,32 +1172,33 @@ if ("$answer".Equals("0"))
 						$dvSwitch_Portgroup_vMotion_check=$dvs.dvSwitch_Portgroup_vMotion
 						$dvSwitch_Portgroup_FaultToleranceLogging_check=$dvs.dvSwitch_Portgroup_FaultToleranceLogging
 						$dvSwitch_Portgroup_Management_check=$dvs.dvSwitch_Portgroup_Management
-						if( ($dvSwitch_Portgroup_vMotion.Equals("FALSE")) -Or ($dvSwitch_Portgroup_vMotion.Equals("false")) )
-						{	$dvSwitch_Portgroup_vMotion=$false	}
-						else
-						{	$dvSwitch_Portgroup_vMotion=$true	}
+						if( ($dvSwitch_Portgroup_vMotion.Equals("FALSE")) -Or ($dvSwitch_Portgroup_vMotion.Equals("false")) ){
+                            $dvSwitch_Portgroup_vMotion=$false
+                        }else{
+                            $dvSwitch_Portgroup_vMotion=$true
+                        }
 					
-						if( ($dvSwitch_Portgroup_FaultToleranceLogging.Equals("FALSE")) -Or ($dvSwitch_Portgroup_FaultToleranceLogging.Equals("false")) )
-						{	$dvSwitch_Portgroup_FaultToleranceLogging=$false	}
-						else
-						{	$dvSwitch_Portgroup_FaultToleranceLogging=$true	}
-						if( ($dvSwitch_Portgroup_Management.Equals("FALSE")) -Or ($dvSwitch_Portgroup_Management.Equals("false")) )
-						{	$dvSwitch_Portgroup_Management=$false	}
-						else
-						{	$dvSwitch_Portgroup_Management=$true	}
+						if( ($dvSwitch_Portgroup_FaultToleranceLogging.Equals("FALSE")) -Or ($dvSwitch_Portgroup_FaultToleranceLogging.Equals("false")) ){
+                            $dvSwitch_Portgroup_FaultToleranceLogging=$false
+                        }else{
+                            $dvSwitch_Portgroup_FaultToleranceLogging=$true
+                        }
+
+						if( ($dvSwitch_Portgroup_Management.Equals("FALSE")) -Or ($dvSwitch_Portgroup_Management.Equals("false")) ){
+                            $dvSwitch_Portgroup_Management=$false
+                        }else{
+                            $dvSwitch_Portgroup_Management=$true
+                        }
 
 						# vMotion,FT,Management Tag Configurations
-						if($dvSwitch_Portgroup_vMotion_check)
-						{
+						if($dvSwitch_Portgroup_vMotion_check){
 							# PortGroup vMotion Tag
 							Get-VMHost $vSphereHost | Get-VMHostNetworkAdapter -vmkernel -Name $dvSwitch_Portgroup_vmk | Set-VMHostNetworkAdapter -VMotionEnabled $dvSwitch_Portgroup_vMotion -Confirm:$false 
 						}
-						if($dvSwitch_Portgroup_FaultToleranceLogging_check)
-						{
+						if($dvSwitch_Portgroup_FaultToleranceLogging_check){
 							Get-VMHost $vSphereHost | Get-VMHostNetworkAdapter -vmkernel -Name $dvSwitch_Portgroup_vmk | Set-VMHostNetworkAdapter -FaultToleranceLoggingEnabled $dvSwitch_Portgroup_FaultToleranceLogging  -Confirm:$false 
 						}
-						if($dvSwitch_Portgroup_Management_check)
-						{
+						if($dvSwitch_Portgroup_Management_check){
 							Get-VMHost $vSphereHost | Get-VMHostNetworkAdapter -vmkernel -Name $dvSwitch_Portgroup_vmk | Set-VMHostNetworkAdapter -ManagementTrafficEnabled $dvSwitch_Portgroup_Management -Confirm:$false 
 						}
 					}
@@ -1412,42 +1210,37 @@ if ("$answer".Equals("0"))
 				$dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled=$dvs.dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled
 				$dvSwitch_Portgroup_NicTeamingPolicy_NotifySwitches_check=$dvs.dvSwitch_Portgroup_NicTeamingPolicy_NotifySwitches
 				$dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled_check=$dvs.dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled
-				if( ($dvSwitch_Portgroup_NicTeamingPolicy_NotifySwitches.Equals("FALSE")) -Or ($dvSwitch_Portgroup_NicTeamingPolicy_NotifySwitches.Equals("false")) )
-				{	$dvSwitch_Portgroup_NicTeamingPolicy_NotifySwitches=$false	}
-				else
-				{	$dvSwitch_Portgroup_NicTeamingPolicy_NotifySwitches=$true	}
+				if( ($dvSwitch_Portgroup_NicTeamingPolicy_NotifySwitches.Equals("FALSE")) -Or ($dvSwitch_Portgroup_NicTeamingPolicy_NotifySwitches.Equals("false")) ){
+                    $dvSwitch_Portgroup_NicTeamingPolicy_NotifySwitches=$false
+                }else{
+                    $dvSwitch_Portgroup_NicTeamingPolicy_NotifySwitches=$true
+                }
 			
-
-				if( ($dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled.Equals("FALSE")) -Or ($dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled.Equals("false")) )
-				{	$dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled=$true	}
-				else
-				{	$dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled=$false	}
+				if( ($dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled.Equals("FALSE")) -Or ($dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled.Equals("false")) ){
+                    $dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled=$true
+                }else{
+                    $dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled=$false
+                }
 
 				# Override of PortGroup NIC Teaming (Load-Balancing Policy)
-				if($dvSwitch_Portgroup_NicTeamingPolicy_LoadBalancingPolicy)
-				{
+				if($dvSwitch_Portgroup_NicTeamingPolicy_LoadBalancingPolicy){
 					Get-VDPortgroup $dvSwitch_Portgroup_Name | Get-VDUplinkTeamingPolicy | Set-VDUplinkTeamingPolicy -LoadBalancingPolicy $dvSwitch_Portgroup_NicTeamingPolicy_LoadBalancingPolicy
 				}
 
                 # Override of PortGroup Failover detechtiion
-				if($dvSwitch_Portgroup_NicTeamingPolicy_NetworkFailoverDetectionPolicy)
-				{
+				if($dvSwitch_Portgroup_NicTeamingPolicy_NetworkFailoverDetectionPolicy){
 					Get-VDPortgroup $dvSwitch_Portgroup_Name | Get-VDUplinkTeamingPolicy | Set-VDUplinkTeamingPolicy -FailoverDetectionPolicy $dvSwitch_Portgroup_NicTeamingPolicy_NetworkFailoverDetectionPolicy
 				}
 
                 # Override of PortGroup Switch Notifications
-				if($dvSwitch_Portgroup_NicTeamingPolicy_NotifySwitches_check)
-				{
+				if($dvSwitch_Portgroup_NicTeamingPolicy_NotifySwitches_check){
 					Get-VDPortgroup $dvSwitch_Portgroup_Name | Get-VDUplinkTeamingPolicy | Set-VDUplinkTeamingPolicy -NotifySwitches $dvSwitch_Portgroup_NicTeamingPolicy_NotifySwitches 
 				}
 
                 # Override of PortGroup Fail-back
-				if($dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled_check)
-				{
+				if($dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled_check){
 					Get-VDPortgroup $dvSwitch_Portgroup_Name | Get-VDUplinkTeamingPolicy | Set-VDUplinkTeamingPolicy -Failback $dvSwitch_Portgroup_NicTeamingPolicy_FailbackEnabled
 				}
-
-				
 				
 				$dvSwitch_Portgroup_Security_AllowPromiscuous=$dvs.dvSwitch_Portgroup_Security_AllowPromiscuous
 				$dvSwitch_Portgroup_Security_MacChanges=$dvs.dvSwitch_Portgroup_Security_MacChanges
@@ -1456,68 +1249,68 @@ if ("$answer".Equals("0"))
 				$dvSwitch_Portgroup_Security_MacChanges_check=$dvs.dvSwitch_Portgroup_Security_MacChanges
 				$dvSwitch_Portgroup_Security_ForgedTransmits_check=$dvs.dvSwitch_Portgroup_Security_ForgedTransmits
 
-				if( ($dvSwitch_Portgroup_Security_AllowPromiscuous.Equals("FALSE")) -Or ($dvSwitch_Portgroup_Security_AllowPromiscuous.Equals("false")) )
-				{	$dvSwitch_Portgroup_Security_AllowPromiscuous=$false	}
-				else
-				{	$dvSwitch_Portgroup_Security_AllowPromiscuous=$true	}
+				if( ($dvSwitch_Portgroup_Security_AllowPromiscuous.Equals("FALSE")) -Or ($dvSwitch_Portgroup_Security_AllowPromiscuous.Equals("false")) ){
+                    $dvSwitch_Portgroup_Security_AllowPromiscuous=$false
+                }else{
+                    $dvSwitch_Portgroup_Security_AllowPromiscuous=$true
+                }
 			
-				if( ($dvSwitch_Portgroup_Security_MacChanges.Equals("FALSE")) -Or ($dvSwitch_Portgroup_Security_MacChanges.Equals("false")) )
-				{	$dvSwitch_Portgroup_Security_MacChanges=$false	}
-				else
-				{	$dvSwitch_Portgroup_Security_MacChanges=$true	}
+				if( ($dvSwitch_Portgroup_Security_MacChanges.Equals("FALSE")) -Or ($dvSwitch_Portgroup_Security_MacChanges.Equals("false")) ){
+                    $dvSwitch_Portgroup_Security_MacChanges=$false
+                }else{
+                    $dvSwitch_Portgroup_Security_MacChanges=$true
+                }
 			
-				if( ($dvSwitch_Portgroup_Security_ForgedTransmits.Equals("FALSE")) -Or ($dvSwitch_Portgroup_Security_ForgedTransmits.Equals("false")) )
-				{	$dvSwitch_Portgroup_Security_ForgedTransmits=$false	}
-				else
-				{	$dvSwitch_Portgroup_Security_ForgedTransmits=$true	}
+				if( ($dvSwitch_Portgroup_Security_ForgedTransmits.Equals("FALSE")) -Or ($dvSwitch_Portgroup_Security_ForgedTransmits.Equals("false")) ){
+                    $dvSwitch_Portgroup_Security_ForgedTransmits=$false
+                }else{
+                    $dvSwitch_Portgroup_Security_ForgedTransmits=$true
+                }
 
 
 				# Configuration of Security Override
-				if($dvSwitch_Portgroup_Security_AllowPromiscuous_check)
-				{
+				if($dvSwitch_Portgroup_Security_AllowPromiscuous_check){
 					Get-VDPortgroup $dvSwitch_Portgroup_Name | Get-VDSecurityPolicy | Set-VDSecurityPolicy -AllowPromiscuous $dvSwitch_Portgroup_Security_AllowPromiscuous
 				}
 
-				if($dvSwitch_Portgroup_Security_MacChanges_check)
-				{
+				if($dvSwitch_Portgroup_Security_MacChanges_check){
 					Get-VDPortgroup $dvSwitch_Portgroup_Name | Get-VDSecurityPolicy | Set-VDSecurityPolicy -MacChanges $dvSwitch_Portgroup_Security_MacChanges
 				}
 
-				if($dvSwitch_Portgroup_Security_ForgedTransmits_check)
-				{
+				if($dvSwitch_Portgroup_Security_ForgedTransmits_check){
 					Get-VDPortgroup $dvSwitch_Portgroup_Name | Get-VDSecurityPolicy | Set-VDSecurityPolicy -ForgedTransmits $dvSwitch_Portgroup_Security_ForgedTransmits
 				}
 
 				$dvSwitch_Portgroup_ShapingPolicy_In=$dvs.dvSwitch_Portgroup_ShapingPolicy_In
 				$dvSwitch_Portgroup_ShapingPolicy_In_check=$dvs.dvSwitch_Portgroup_ShapingPolicy_In
-				if( ($dvSwitch_Portgroup_ShapingPolicy_In.Equals("FALSE")) -Or ($dvSwitch_Portgroup_ShapingPolicy_In.Equals("false")) )
-				{	$dvSwitch_Portgroup_ShapingPolicy_In=$false	}
-				else
-				{	$dvSwitch_Portgroup_ShapingPolicy_In=$true	}
+				if( ($dvSwitch_Portgroup_ShapingPolicy_In.Equals("FALSE")) -Or ($dvSwitch_Portgroup_ShapingPolicy_In.Equals("false")) ){
+                    $dvSwitch_Portgroup_ShapingPolicy_In=$false
+                }else{
+                    $dvSwitch_Portgroup_ShapingPolicy_In=$true
+                }
 				[System.Int64]$dvSwitch_Portgroup_ShapingPolicy_In_AverageBandwidth=([System.Int64]$dvs.dvSwitch_Portgroup_ShapingPolicy_In_AverageBandwidth * 1000)
 				[System.Int64]$dvSwitch_Portgroup_ShapingPolicy_In_PeakBandwidth=([System.Int64]$dvs.dvSwitch_Portgroup_ShapingPolicy_In_PeakBandwidth * 1000)
 				[System.Int64]$dvSwitch_Portgroup_ShapingPolicy_In_BurstSize=([System.Int64]$dvs.dvSwitch_Portgroup_ShapingPolicy_In_BurstSize * 1024)
 
 				
-				if( ($dvSwitch_Portgroup_ShapingPolicy_In_check) -And ($dvSwitch_Portgroup_ShapingPolicy_In_AverageBandwidth) -And ($dvSwitch_Portgroup_ShapingPolicy_In_PeakBandwidth) -And ($dvSwitch_Portgroup_ShapingPolicy_In_BurstSize) )
-				{
+				if( ($dvSwitch_Portgroup_ShapingPolicy_In_check) -And ($dvSwitch_Portgroup_ShapingPolicy_In_AverageBandwidth) -And ($dvSwitch_Portgroup_ShapingPolicy_In_PeakBandwidth) -And ($dvSwitch_Portgroup_ShapingPolicy_In_BurstSize) ){
 					Get-VDSwitch $dvSwitchName | Get-VDPortgroup $dvSwitch_Portgroup_Name | Get-VDTrafficShapingPolicy -Direction In | Set-VDTrafficShapingPolicy -Enabled $dvSwitch_Portgroup_ShapingPolicy_In -AverageBandwidth $dvSwitch_Portgroup_ShapingPolicy_In_AverageBandwidth -PeakBandwidth $dvSwitch_Portgroup_ShapingPolicy_In_PeakBandwidth -BurstSize $dvSwitch_Portgroup_ShapingPolicy_In_BurstSize
 				}
 
 
 				$dvSwitch_Portgroup_ShapingPolicy_Out=$dvs.dvSwitch_Portgroup_ShapingPolicy_Out
 				$dvSwitch_Portgroup_ShapingPolicy_Out_check=$dvs.dvSwitch_Portgroup_ShapingPolicy_Out
-				if( ($dvSwitch_Portgroup_ShapingPolicy_Out.Equals("FALSE")) -Or ($dvSwitch_Portgroup_ShapingPolicy_Out.Equals("false")) )
-				{	$dvSwitch_Portgroup_ShapingPolicy_Out=$false	}
-				else
-				{	$dvSwitch_Portgroup_ShapingPolicy_Out=$true	}
+				if( ($dvSwitch_Portgroup_ShapingPolicy_Out.Equals("FALSE")) -Or ($dvSwitch_Portgroup_ShapingPolicy_Out.Equals("false")) ){
+                    $dvSwitch_Portgroup_ShapingPolicy_Out=$false
+                }else{
+                    $dvSwitch_Portgroup_ShapingPolicy_Out=$true
+                }
 				[System.Int64]$dvSwitch_Portgroup_ShapingPolicy_Out_AverageBandwidth=([System.Int64]$dvs.dvSwitch_Portgroup_ShapingPolicy_Out_AverageBandwidth * 1000)
 				[System.Int64]$dvSwitch_Portgroup_ShapingPolicy_Out_PeakBandwidth=([System.Int64]$dvs.dvSwitch_Portgroup_ShapingPolicy_Out_PeakBandwidth * 1000)
 				[System.Int64]$dvSwitch_Portgroup_ShapingPolicy_Out_BurstSize=([System.Int64]$dvs.dvSwitch_Portgroup_ShapingPolicy_Out_BurstSize * 1024)
 
 
-				if( ($dvSwitch_Portgroup_ShapingPolicy_Out_check) -And ($dvSwitch_Portgroup_ShapingPolicy_Out_AverageBandwidth) -And ($dvSwitch_Portgroup_ShapingPolicy_Out_PeakBandwidth) -And ($dvSwitch_Portgroup_ShapingPolicy_Out_BurstSize) )
-				{
+				if( ($dvSwitch_Portgroup_ShapingPolicy_Out_check) -And ($dvSwitch_Portgroup_ShapingPolicy_Out_AverageBandwidth) -And ($dvSwitch_Portgroup_ShapingPolicy_Out_PeakBandwidth) -And ($dvSwitch_Portgroup_ShapingPolicy_Out_BurstSize) ){
 					Get-VDSwitch $dvSwitchName | Get-VDPortgroup $dvSwitch_Portgroup_Name | Get-VDTrafficShapingPolicy -Direction Out | Set-VDTrafficShapingPolicy -Enabled $dvSwitch_Portgroup_ShapingPolicy_Out -AverageBandwidth $dvSwitch_Portgroup_ShapingPolicy_Out_AverageBandwidth -PeakBandwidth $dvSwitch_Portgroup_ShapingPolicy_Out_PeakBandwidth -BurstSize $dvSwitch_Portgroup_ShapingPolicy_Out_BurstSize
 				}
 			}
@@ -1529,21 +1322,15 @@ if ("$answer".Equals("0"))
 
 # Enable Software iSCSI
 $SoftwareISCSI=$vms[0].SoftwareISCSI	
-if( ($SoftwareISCSI.Equals("TRUE")) -Or ($SoftwareISCSI.Equals("true")) )
-{
+if( ($SoftwareISCSI.Equals("TRUE")) -Or ($SoftwareISCSI.Equals("true")) ){
 	Write-Host "---------------Enabling Software iSCSI---------------"
-		foreach ($cl in $vms) 
-	{
+	foreach ($cl in $vms){
 		$ClusterName = $cl.ClusterName
-			if("$ClusterName") 
-		{
+			if("$ClusterName") {
 			$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to Enable Software iSCSI on hosts in Cluster[ $ClusterName ] ??",$choice,0)
-			if ("$answer".Equals("0"))
-			{
+			if ("$answer".Equals("0")){
 				Get-VMHost -Location $ClusterName | Get-VMHostStorage | Set-VMHostStorage -SoftwareIScsiEnabled $true 
-			}
-			else
-			{
+			}else{
 				Write-Host "`n`Skipped to enable Software iSCSI of the hosts." -fore Red
 			}
 		}
@@ -1551,25 +1338,18 @@ if( ($SoftwareISCSI.Equals("TRUE")) -Or ($SoftwareISCSI.Equals("true")) )
 }
 
 
-
 # Scheduler Settings
 $SchedulerWithReservation=$vms[0].SchedulerWithReservation
 
-if( ($SchedulerWithReservation.Equals("TRUE")) -Or ($SchedulerWithReservation.Equals("true")) )
-{
+if( ($SchedulerWithReservation.Equals("TRUE")) -Or ($SchedulerWithReservation.Equals("true")) ){
 Write-Host "---------------/Disk/SchedulerWithReservation Settings---------------"
-	foreach ($cl in $vms)
-	{
+	foreach ($cl in $vms){
 		$ClusterName=$cl.ClusterName
-		if ("$ClusterName")
-		{
+		if ("$ClusterName"){
 			$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to configure /Disk/SchedulerWithReservation==0 to Cluster[ $ClusterName ] ??",$choice,0)
-			if ("$answer".Equals("0"))
-			{
+			if ("$answer".Equals("0")){
 				Get-VMHost -Location $ClusterName | Get-AdvancedSetting -Name "Disk.SchedulerWithReservation" | Set-AdvancedSetting -Value 0 -Confirm:$false
-			}
-			else
-			{
+			}else{
 				Write-Host "`nSkipped to configurations of hosts in Cluster[ $ClusterName ]" -fore Red
 			}	
 		}
@@ -1577,64 +1357,48 @@ Write-Host "---------------/Disk/SchedulerWithReservation Settings--------------
 }
 
 
-
-
 # VMFS capacity settings
 $MaxAddressableSpaceTB=$vms[0].MaxAddressableSpaceTB
 
-if( ($MaxAddressableSpaceTB.Equals("TRUE")) -Or ($MaxAddressableSpaceTB.Equals("true")) )
-{
-Write-Host "---------------VMFS3.MaxAddressableSpaceTB Settings---------------"
+if( ($MaxAddressableSpaceTB.Equals("TRUE")) -Or ($MaxAddressableSpaceTB.Equals("true")) ){
+    Write-Host "---------------VMFS3.MaxAddressableSpaceTB Settings---------------"
+    
     ## For Cluster1
-	if ("$ClusterName_1")
-	{
+	if ("$ClusterName_1"){
 		$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to configure VMFS3.MaxAddressableSpaceTB==128 to Cluster[ $ClusterName_1 ] ??",$choice,0)
-		if ("$answer".Equals("0"))
-		{
+		if ("$answer".Equals("0")){
 			Get-VMHost -Location "$ClusterName_1" | Get-AdvancedSetting -Name "VMFS3.MaxAddressableSpaceTB" | Set-AdvancedSetting -Value 128 -Confirm:$false
-		}
-		else
-		{
+		}else{
 			Write-Host "`nSkipped to configurations of VMFS3.MaxAddressableSpaceTB to hosts in Cluster[ $ClusterName_1 ]." -fore Red
 		}
 	}
     ## For Cluster2
-	if ("$ClusterName_2")
-	{
+	if ("$ClusterName_2"){
 		$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to configure VMFS3.MaxAddressableSpaceTB==128 to Cluster[ $ClusterName_2 ] ??",$choice,0)
-		if ("$answer".Equals("0"))
-		{
+		if ("$answer".Equals("0")){
 			Get-VMHost -Location "$ClusterName_2" | Get-AdvancedSetting -Name "VMFS3.MaxAddressableSpaceTB" | Set-AdvancedSetting -Value 128 -Confirm:$false
-		}
-		else
-		{
+		}else{
 			Write-Host "`nSkipped to configurations of VMFS3.MaxAddressableSpaceTB to hosts in Cluster[ $ClusterName_2 ]." -fore Red
 		}
 	}
 
     ## For Cluster3
-	if ("$ClusterName_3")
-	{
+	if ("$ClusterName_3"){
 		$answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to configure VMFS3.MaxAddressableSpaceTB==128 to Cluster[ $ClusterName_3 ] ??",$choice,0)
-		if ("$answer".Equals("0"))
-		{
+		if ("$answer".Equals("0")){
 			Get-VMHost -Location "$ClusterName_3" | Get-AdvancedSetting -Name "VMFS3.MaxAddressableSpaceTB" | Set-AdvancedSetting -Value 128 -Confirm:$false
-		}
-		else
-		{
+		}else{
 			Write-Host "`nSkipped to configurations of VMFS3.MaxAddressableSpaceTB to hosts in Cluster[ $ClusterName_3 ]." -fore Red
 		}
 	}
+}
 
 Write-Host "---------------Move to Maintenace mode before Host Reboot to get HostProfile---------------"
 $answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to set host Maintenace mode ??",$choice,0)
-if ("$answer".Equals("0"))
-{	
-	foreach ($cl in $vms)
-	{
+if ("$answer".Equals("0")){	
+	foreach ($cl in $vms){
 		$ClusterName=$cl.ClusterName
-		if ($ClusterName)
-		{
+		if ($ClusterName){
 			# Except hosts on which are running VMs
 			$EXCLUDE_ESXHOST = Get-VM -Location $ClusterName | Where-Object {$_.PowerState -eq 'PoweredOn'} | ForEach-Object {$_.Host}
 			$EXCLUDE_ESXHOST = $EXCLUDE_ESXHOST -join ","
@@ -1642,7 +1406,6 @@ if ("$answer".Equals("0"))
 			Get-VMHost -Location $ClusterName | Exclude-Object($EXCLUDE_ESXHOST) | Set-VMHost -State 'Maintenance' -RunAsync -Confirm:$false
 		}
 	}
-
 }
 
 Write-Host "---------------Reboot ESXi Hosts---------------"
@@ -1650,13 +1413,10 @@ Write-Host "Please wait for a minute to complete entering Maintenace mode..." -f
 timeout 60
 
 $answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to reboot ESXi Hosts ??",$choice,0)
-if ("$answer".Equals("0"))
-{	
-	foreach ($cl in $vms)
-	{
+if ("$answer".Equals("0")){	
+	foreach ($cl in $vms){
 		$ClusterName=$cl.ClusterName
-		if ($ClusterName)
-		{
+		if ($ClusterName){
 			# Except hosts on which are running VMs
 			$EXCLUDE_RESTERTESXHOST = Get-VM -Location $ClusterName | Where-Object {$_.PowerState -eq 'PoweredOn'} | ForEach-Object {$_.Host}
 			$EXCLUDE_RESTERTESXHOST = $EXCLUDE_RESTERTESXHOST -join ","
@@ -1668,21 +1428,15 @@ if ("$answer".Equals("0"))
 
 
 Write-Host "---------------Cluster HA Settings---------------"
-foreach ($cl in $vms) 
-{
+foreach ($cl in $vms) {
 	$ClusterName = $cl.ClusterName
-	if("$ClusterName") 
-	{
+	if("$ClusterName") {
 		$answer = $host.ui.PromptForChoice("[Confirmation]","`n`Are you sure to enable HA of Cluster[ $ClusterName ] ??",$choice,0)
-		if ("$answer".Equals("0"))
-		{		
+		if ("$answer".Equals("0")){		
 			$HAAdmissionControlEnabled=$vms[0].HAAdmissionControlEnabled
-			if( ($HAAdmissionControlEnabled.Equals("TRUE")) -Or ($HAAdmissionControlEnabled.Equals("true")) )
-			{	
+			if( ($HAAdmissionControlEnabled.Equals("TRUE")) -Or ($HAAdmissionControlEnabled.Equals("true")) ){	
 				Set-Cluster -Cluster $ClusterName -HAEnabled:$true -HAAdmissionControlEnabled:$true -HARestartPriority Medium -HAIsolationResponse DoNothing -HAFailoverLevel 1 -VMSwapfilePolicy WithVM
-			}
-			else
-			{	
+			}else{	
 				# Disable Admission Controls
 				Set-Cluster -Cluster $ClusterName -HAEnabled:$true -HAAdmissionControlEnabled:$false -HARestartPriority Medium -HAIsolationResponse DoNothing -VMSwapfilePolicy WithVM
 			}
@@ -1702,9 +1456,7 @@ foreach ($cl in $vms)
 			$cluster = Get-Cluster -Name "$ClusterName"
 			$_this = Get-View -Id $cluster.Id
 			$_this.ReconfigureComputeResource_Task($spec, $true)
-		}
-		else
-		{
+		}else{
 			Write-Host "`nSkipped to configurations to Cluster[ $ClusterName ]" -fore Red
 		}
 	}
@@ -1717,25 +1469,21 @@ Write-Host "Please wait for rebooting ESXi hosts. It would take some time..." -f
 timeout 600
 
 $answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to start creating HostProfile of each ESXi host ??",$choice,0)
-if ("$answer".Equals("0"))
-{
+if ("$answer".Equals("0")){
     ## For Cluster1
-	if ("$ClusterName_1")
-	{
+	if ("$ClusterName_1"){
 		$vmhost=$vms[0].vSphereHost_Cluster1
 		$profile_name=$ClusterName_1 + "_Profile"
 		DoCommand-WithConfirm "New-VMHostProfile -Name `"$profile_name`" -ReferenceHost `"$vmhost`" "    " Are you sure to create HostProfile of `"$ClusterName_1`" with `"$vmhost`" ??" $true
 	}
     ## For Cluster2
-	if ("$ClusterName_2")
-	{
+	if ("$ClusterName_2"){
 		$vmhost=$vms[0].vSphereHost_Cluster2
 		$profile_name=$ClusterName_2 + "_Profile"
 		DoCommand-WithConfirm "New-VMHostProfile -Name `"$profile_name`" -ReferenceHost `"$vmhost`" "    " Are you sure to create HostProfile of `"$ClusterName_2`" with `"$vmhost`" ??" $true
 	}
     ## For Cluster3
-	if ("$ClusterName_3")
-	{
+	if ("$ClusterName_3"){
 		$vmhost=$vms[0].vSphereHost_Cluster3
 		$profile_name=$ClusterName_3 + "_Profile"
 		DoCommand-WithConfirm "New-VMHostProfile -Name `"$profile_name`" -ReferenceHost `"$vmhost`" "    " Are you sure to create HostProfile of `"$ClusterName_3`" with `"$vmhost`" ??" $true
@@ -1745,25 +1493,21 @@ if ("$answer".Equals("0"))
 
 Write-Host "---------------Exporting HostProfiles---------------"
 $answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to export HostProfiles ??",$choice,0)
-if ("$answer".Equals("0"))
-{
+if ("$answer".Equals("0")){
     ## For Cluster1
-	if ("$ClusterName_1")
-	{
+	if ("$ClusterName_1"){
 		$profile_name=$ClusterName_1 + "_Profile"
 		$profile_export_name="C:\" + $ClusterName_1 + "_Profile.vpf"
 		DoCommand-WithConfirm "Export-VMHostProfile -FilePath `"$profile_export_name`" -Profile `"$profile_name`" -Force "    " Are you sure to export HostProfile of `"$ClusterName_1`" to `"$profile_export_name`" ??" $true
 	}
     ## For Cluster2
-	if ("$ClusterName_2")
-	{
+	if ("$ClusterName_2"){
 		$profile_name=$ClusterName_2 + "_Profile"
 		$profile_export_name="C:\" + $ClusterName_2 + "_Profile.vpf"
 		DoCommand-WithConfirm "Export-VMHostProfile -FilePath `"$profile_export_name`" -Profile `"$profile_name`" -Force "    " Are you sure to export HostProfile of `"$ClusterName_1`" to `"$profile_export_name`" ??" $true
 	}
     ## For Cluster3
-	if ("$ClusterName_3")
-	{
+	if ("$ClusterName_3"){
 		$profile_name=$ClusterName_3 + "_Profile"
 		$profile_export_name="C:\" + $ClusterName_3 + "_Profile.vpf"
 		DoCommand-WithConfirm "Export-VMHostProfile -FilePath `"$profile_export_name`" -Profile `"$profile_name`" -Force "    " Are you sure to export HostProfile of `"$ClusterName_1`" to `"$profile_export_name`" ??" $true
@@ -1773,13 +1517,10 @@ if ("$answer".Equals("0"))
 
 Write-Host "---------------Exiting Maintenance mode---------------"
 $answer = $host.ui.PromptForChoice("[Confirmation]","`n Are you sure to exit Maintenace mode ??",$choice,0)
-if ("$answer".Equals("0"))
-{	
-	foreach ($cl in $vms)
-	{
+if ("$answer".Equals("0")){	
+	foreach ($cl in $vms){
 		$ClusterName=$cl.ClusterName
-		if ($ClusterName)
-		{
+		if ($ClusterName){
 			Get-VMHost -Location $ClusterName | Set-VMHost -State 'Connected' -RunAsync -Confirm:$false
 		}
 	}
@@ -1788,19 +1529,14 @@ if ("$answer".Equals("0"))
 
 Write-Host "---------------Software iSCSI storage target settings---------------"
 $answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to register Software iSCSI storage targets ??",$choice,0)
-if ("$answer".Equals("0"))
-{	
+if ("$answer".Equals("0")){	
     ## For Cluster1
-	foreach ($vm in $vms) 
-	{
+	foreach ($vm in $vms){
 		$vSphereHost = $vm.vSphereHost_Cluster1
-		if("$vSphereHost") 
-		{
-			foreach ($target in $vms) 
-			{
+		if("$vSphereHost"){
+			foreach ($target in $vms){
 				$target_ip=$target.iSCSI_Target_Address_Cluster1
-				if("$target_ip")
-				{
+				if("$target_ip"){
 					$hba = Get-VMHost $vSphereHost | Get-VMHostHba -Type iScsi
 					New-IScsiHbaTarget -IScsiHba $hba -Address $target_ip
 				}
@@ -1809,16 +1545,12 @@ if ("$answer".Equals("0"))
 		}
 	}
 	## For Cluster2	
-	foreach ($vm in $vms) 
-	{
+	foreach ($vm in $vms){
 		$vSphereHost = $vm.vSphereHost_Cluster2
-		if("$vSphereHost") 
-		{
-			foreach ($target in $vms) 
-			{
+		if("$vSphereHost"){
+			foreach ($target in $vms){
 				$target_ip=$target.iSCSI_Target_Address_Cluster2
-				if("$target_ip")
-				{
+				if("$target_ip"){
 					$hba = Get-VMHost $vSphereHost | Get-VMHostHba -Type iScsi
 					New-IScsiHbaTarget -IScsiHba $hba -Address $target_ip
 				}
@@ -1827,16 +1559,12 @@ if ("$answer".Equals("0"))
 		}
 	}
     ## For Cluster3
-	foreach ($vm in $vms) 
-	{
+	foreach ($vm in $vms) {
 		$vSphereHost = $vm.vSphereHost_Cluster3
-		if("$vSphereHost") 
-		{
-			foreach ($target in $vms) 
-			{
+		if("$vSphereHost"){
+			foreach ($target in $vms){
 				$target_ip=$target.iSCSI_Target_Address_Cluster3
-				if("$target_ip")
-				{
+				if("$target_ip"){
 					$hba = Get-VMHost $vSphereHost | Get-VMHostHba -Type iScsi
 					New-IScsiHbaTarget -IScsiHba $hba -Address $target_ip
 				}
@@ -1844,10 +1572,7 @@ if ("$answer".Equals("0"))
 		Get-VMHost $vSphereHost | Get-VmHostStorage -RescanAllHba
 		}
 	}
-
-}
-else
-{
+}else{
 	Write-Host "`nSkipped to configuration of Software iSCSI storage targets." -fore Red
 }
 
@@ -1857,47 +1582,37 @@ else
 Write-Host "---------------Create VMFS DataStore---------------"
 $answer = $host.ui.PromptForChoice("[Confirmation]","`n Are you sure to create VMFS DataStore ??",$choice,0)
 
-if ("$answer".Equals("0"))
-{
+if ("$answer".Equals("0")){
 $FileSystemVersion=$vms[0].FileSystemVersion
 	## For Cluster1
-    if ("$ClusterName_1")
-	{
+    if ("$ClusterName_1"){
 		$vSphereHost = $vms[0].vSphereHost_Cluster1	
-		foreach ($vmfs in $vms) 
-		{
+		foreach ($vmfs in $vms){
 			$datastore_name=$vmfs.Datastore_Name_Cluster1
 			$canonical_name=$vmfs.Datastore_CanonicalName_Cluster1	
-			if("$datastore_name") 
-			{
+			if("$datastore_name"){
 				New-Datastore -VMHost $vSphereHost -Name $datastore_name -Path $canonical_name -FileSystemVersion $FileSystemVersion
 			}
 		}
 	}
 	## For Cluster2
-	if ("$ClusterName_2")
-	{
+	if ("$ClusterName_2"){
 		$vSphereHost = $vms[0].vSphereHost_Cluster2	
-		foreach ($vmfs in $vms) 
-		{
+		foreach ($vmfs in $vms){
 			$datastore_name=$vmfs.Datastore_Name_Cluster2
 			$canonical_name=$vmfs.Datastore_CanonicalName_Cluster2	
-			if("$datastore_name") 
-			{
+			if("$datastore_name"){
 				New-Datastore -VMHost $vSphereHost -Name $datastore_name -Path $canonical_name -FileSystemVersion $FileSystemVersion
 			}
 		}
 	}
 	## For Cluster3
-	if ("$ClusterName_3")
-	{
+	if ("$ClusterName_3"){
 		$vSphereHost = $vms[0].vSphereHost_Cluster3	
-		foreach ($vmfs in $vms) 
-		{
+		foreach ($vmfs in $vms){
 			$datastore_name=$vmfs.Datastore_Name_Cluster3
 			$canonical_name=$vmfs.Datastore_CanonicalName_Cluster3	
-			if("$datastore_name") 
-			{
+			if("$datastore_name"){
 				New-Datastore -VMHost $vSphereHost -Name $datastore_name -Path $canonical_name -FileSystemVersion $FileSystemVersion
 			}
 		}
@@ -1908,49 +1623,36 @@ $FileSystemVersion=$vms[0].FileSystemVersion
 Write-Host "---------------Enable Storage I/O Controll---------------"
 $answer = $host.ui.PromptForChoice("[Confirmation]","`n Are you sure to enable DataStore SIOC ??",$choice,0)
 
-if ("$answer".Equals("0"))
-{
+if ("$answer".Equals("0")){
 	$StorageIOControl=$vms[0].StorageIOControl	
     ## For Cluster1
-	if( ("$StorageIOControl".Equals("TRUE")) -Or ("$StorageIOControl".Equals("true")) )
-	{
-		if ("$ClusterName_1")
-		{	
-			foreach ($vmfs in $vms) 
-			{		
+	if( ("$StorageIOControl".Equals("TRUE")) -Or ("$StorageIOControl".Equals("true")) ){
+		if ("$ClusterName_1"){	
+			foreach ($vmfs in $vms){
 				$datastore_name=$vmfs.Datastore_Name_Cluster1
-				if("$datastore_name") 
-				{
+				if("$datastore_name"){
 					Set-Datastore $datastore_name -StorageIOControlEnabled $true
 				}
 			}
 		}
 	}
     ## For Cluster2
-	if( ("$StorageIOControl".Equals("TRUE")) -Or ("$StorageIOControl".Equals("true")) )
-	{
-		if ("$ClusterName_2")
-		{	
-			foreach ($vmfs in $vms) 
-			{		
+	if( ("$StorageIOControl".Equals("TRUE")) -Or ("$StorageIOControl".Equals("true")) ){
+		if ("$ClusterName_2"){
+			foreach ($vmfs in $vms){		
 				$datastore_name=$vmfs.Datastore_Name_Cluster2	
-				if("$datastore_name") 
-				{
+				if("$datastore_name"){
 					Set-Datastore $datastore_name -StorageIOControlEnabled $true
 				}
 			}
 		}
 	}
     ## For Cluster3
-	if( ("$StorageIOControl".Equals("TRUE")) -Or ("$StorageIOControl".Equals("true")) )
-	{
-		if ("$ClusterName_3")
-		{
-			foreach ($vmfs in $vms) 
-			{		
+	if( ("$StorageIOControl".Equals("TRUE")) -Or ("$StorageIOControl".Equals("true")) ){
+		if ("$ClusterName_3"){
+			foreach ($vmfs in $vms){
 				$datastore_name=$vmfs.Datastore_Name_Cluster3	
-				if("$datastore_name") 
-				{
+				if("$datastore_name"){
 					Set-Datastore $datastore_name -StorageIOControlEnabled $true
 				}
 			}
@@ -1961,17 +1663,13 @@ if ("$answer".Equals("0"))
 
 Write-Host "---------------Disabale Delayed ACK---------------"
 $answer = $host.ui.PromptForChoice("[Confirmation]","`nAre you sure to disable Delayed ACK ??",$choice,0)
-if ("$answer".Equals("0"))
-{	
+if ("$answer".Equals("0")){	
 	$Delayed_ACK_Disabled=$vms[0].Delayed_ACK_Disabled	
-	if( ("$Delayed_ACK_Disabled".Equals("TRUE")) -Or ("$Delayed_ACK_Disabled".Equals("true")) )
-	{
+	if( ("$Delayed_ACK_Disabled".Equals("TRUE")) -Or ("$Delayed_ACK_Disabled".Equals("true")) ){
         ## For Cluster1
-		foreach ($vm in $vms) 
-		{
+		foreach ($vm in $vms){
 			$vSphereHost = $vm.vSphereHost_Cluster1
-			if("$vSphereHost") 
-			{
+			if("$vSphereHost"){
 				#This section will get host information needed
 				$HostView = Get-VMHost $vSphereHost | Get-View
 				$HostStorageSystemID = $HostView.configmanager.StorageSystem
@@ -1987,11 +1685,9 @@ if ("$answer".Equals("0"))
 			}
 		}
         ## For Cluster2		
-		foreach ($vm in $vms) 
-		{
+		foreach ($vm in $vms){
 			$vSphereHost = $vm.vSphereHost_Cluster2
-			if("$vSphereHost") 
-			{
+			if("$vSphereHost"){
 				#This section will get host information needed
 				$HostView = Get-VMHost $vSphereHost | Get-View
 				$HostStorageSystemID = $HostView.configmanager.StorageSystem
@@ -2006,12 +1702,10 @@ if ("$answer".Equals("0"))
 				$HostStorageSystem.UpdateInternetScsiAdvancedOptions($HostiSCSISoftwareAdapterHBAID, $null, $options)
 			}
 		}
-        ## For Cluster3		
-		foreach ($vm in $vms) 
-		{
+        ## For Cluster3
+		foreach ($vm in $vms){
 			$vSphereHost = $vm.vSphereHost_Cluster3
-			if("$vSphereHost") 
-			{
+			if("$vSphereHost"){
 				#This section will get host information needed
 				$HostView = Get-VMHost $vSphereHost | Get-View
 				$HostStorageSystemID = $HostView.configmanager.StorageSystem
