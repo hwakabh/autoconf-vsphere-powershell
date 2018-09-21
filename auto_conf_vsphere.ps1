@@ -24,8 +24,7 @@ function LoadPowerCLI {
 }
 
 # Prompt waiting Enter Key
-function Wait ()
-{
+function Wait (){
     Write-Host "Press Enter..." 
     [Console]::ReadKey() | Out-Null
 }
