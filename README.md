@@ -1,4 +1,4 @@
-# autoconf-vsphere-powershell
+# ps-autoconf-vsphere
 
 - PreRequirements
   - Make sure connection to vCenter/ESXi for auto-configurations
